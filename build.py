@@ -170,8 +170,10 @@ def build() -> None:
     # Cada página va en <ruta>/index.html para que la URL quede sin ".html".
     write("index.html", env.get_template("index.html").render(talks=talks, path="/"))
     write("about/index.html", env.get_template("about.html").render(talks=talks, path="/about/"))
+    # Cloudflare Pages sirve dist/404.html (con código 404) para las URLs que no existen.
+    write("404.html", env.get_template("404.html").render(path="/404.html"))
     for talk in talks:
-        path = f"/charlas/{talk.slug}/"
+        path =f"/charlas/{talk.slug}/"
         write(f"charlas/{talk.slug}/index.html",
               env.get_template("talk.html").render(talk=talk, path=path))
 

@@ -9,7 +9,12 @@
   <title>{{ full_title }}</title>
   <meta name="description" content="{{ description }}">
   <meta name="author" content="{{ site.author }}">
+  {% if noindex %}
+  <!-- Página que los buscadores no deben indexar (p. ej. la 404) -->
+  <meta name="robots" content="noindex">
+  {% else %}
   <link rel="canonical" href="{{ canonical }}">
+  {% endif %}
 
   <!-- Open Graph: cómo se ve el enlace al compartirlo en redes -->
   <meta property="og:type" content="{{ og_type or 'website' }}">
