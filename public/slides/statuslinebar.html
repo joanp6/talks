@@ -5,415 +5,590 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Activando la statusline bar en Claude Cli · Joan</title>
 <!--
-  Presentación de un solo archivo (HTML + CSS + JS, sin dependencias).
-  Teclas: → / espacio = siguiente · ← = anterior · N = notas · F = pantalla completa
-          Inicio / Fin = primera / última
-  La barra de abajo imita la status line de Claude Code: su "ctx" es el avance de la charla.
+  Presentación animada de un solo archivo (sin dependencias).
+  A la izquierda, una terminal de Claude Code donde se escribe el prompt y Claude implementa
+  la status line. A la derecha, la guía que explica cada paso.
+
+  Teclas: → / espacio / clic = siguiente paso (si hay una animación en marcha, la termina)
+          ← = escena anterior · R = repetir escena · N = notas · F = pantalla completa
 -->
 <style>
 :root {
-  --bg: #1e1e1e; --bg-2: #252526; --bg-3: #2d2d2d; --border: #3c3c3c;
+  --bg: #1e1e1e; --term: #141414; --panel: #252526; --border: #3c3c3c;
   --text: #d4d4d4; --muted: #8b8b8b; --dim: #5a5a5a;
-  --blue: #569cd6; --accent: #0e639c; --cyan: #4ec9b0; --green: #6a9955;
-  --ok: #3fb950; --yellow: #d7ba7d; --orange: #ce9178; --red: #f14c4c; --magenta: #c586c0;
-  --mono: "Cascadia Code", "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --claude: #d97757; --blue: #569cd6; --cyan: #4ec9b0; --ok: #3fb950;
+  --yellow: #d7ba7d; --red: #f14c4c; --magenta: #c586c0; --orange: #ce9178;
+  --add-bg: rgba(63, 185, 80, .14); --del-bg: rgba(241, 76, 76, .14);
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
   --ui: "Segoe UI", system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
-/* Todo escala con la ventana: así se ve igual en el proyector y dentro de un iframe */
-html { font-size: min(1.25vw, 2.2vh); }
+/* Todo escala con la ventana (proyector, portátil o iframe de la web) */
+html { font-size: min(1.05vw, 1.87vh); }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--ui); overflow: hidden; }
 
-.app { display: flex; flex-direction: column; height: 100vh; }
+.app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
 
-/* --- Barra de título y pestaña --- */
-.titlebar { display: flex; align-items: center; gap: 1rem; height: 2.2rem; padding: 0 1rem; background: #181818; border-bottom: 1px solid var(--border); font-size: .8rem; color: var(--muted); }
-.titlebar__logo { width: 1rem; height: 1rem; }
+/* --- Barra superior estilo VS Code --- */
+.titlebar { display: flex; align-items: center; gap: 1rem; height: 2.4rem; padding: 0 1rem; background: #181818; border-bottom: 1px solid var(--border); font-size: .85rem; color: var(--muted); }
+.titlebar svg { width: 1.1rem; height: 1.1rem; }
+.titlebar__tabs { display: flex; gap: 1.5rem; font-family: var(--mono); font-size: .8rem; letter-spacing: .05em; }
+.titlebar__tabs span.on { color: var(--text); border-bottom: 1px solid var(--text); padding-bottom: .1rem; }
 .titlebar__title { flex: 1; text-align: center; }
-.titlebar__keys kbd { font-family: var(--mono); font-size: .7rem; border: 1px solid var(--border); border-radius: 3px; padding: 0 .3rem; margin-left: .3rem; }
-.back { color: #fff; background: var(--accent); text-decoration: none; padding: .15rem .6rem; border-radius: 3px; }
+.titlebar kbd { font-family: var(--mono); font-size: .7rem; border: 1px solid var(--border); border-radius: 3px; padding: 0 .3rem; margin-left: .25rem; }
+.back { color: #fff; background: #0e639c; text-decoration: none; padding: .15rem .6rem; border-radius: 3px; }
 .back:hover { background: #1177bb; }
-.tabs { display: flex; height: 2.1rem; background: var(--bg-2); border-bottom: 1px solid var(--border); }
-.tab { display: flex; align-items: center; gap: .5rem; padding: 0 1rem; background: var(--bg); border-top: 2px solid var(--accent); font-size: .85rem; }
-.tab::before { content: "●"; color: var(--cyan); font-size: .6rem; }
 
-/* --- Escenario y diapositivas --- */
-.stage { position: relative; flex: 1; min-height: 0; }
-.slide { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 2.5rem 6rem; }
-.slide.is-on { display: flex; animation: entra .35s ease; }
-@keyframes entra { from { opacity: 0; transform: translateY(.6rem); } to { opacity: 1; transform: none; } }
+.main { display: grid; grid-template-columns: 1.7fr 1fr; min-height: 0; }
 
-.eyebrow { font-family: var(--mono); font-size: .85rem; letter-spacing: .15em; text-transform: uppercase; color: var(--blue); margin-bottom: 1.2rem; }
-.eyebrow::before { content: "── "; color: var(--dim); }
-h1 { font-size: 3.6rem; line-height: 1.1; margin: 0 0 1.2rem; font-weight: 600; }
-h2 { font-size: 2.4rem; line-height: 1.15; margin: 0 0 1.5rem; font-weight: 600; }
-h1 em, h2 em { font-style: normal; color: var(--blue); }
-.sub { font-size: 1.35rem; color: var(--muted); max-width: 46rem; margin: 0 0 2rem; line-height: 1.5; }
-.who { font-family: var(--mono); color: var(--muted); }
-.who b { color: var(--text); }
-.big { font-size: 1.5rem; line-height: 1.6; }
-.muted { color: var(--muted); }
-code, pre { font-family: var(--mono); }
+/* --- Terminal de Claude Code --- */
+.term { display: flex; flex-direction: column; min-height: 0; background: var(--term); border-right: 1px solid var(--border); font-family: var(--mono); font-size: 1rem; line-height: 1.55; }
+/* flex-end: lo nuevo entra por abajo y lo viejo desaparece por arriba, como en una terminal */
+.transcript { flex: 1; min-height: 0; overflow: hidden; padding: 1.2rem 1.6rem .6rem; display: flex; flex-direction: column; justify-content: flex-end; }
+.transcript > * { flex-shrink: 0; }
 
-/* Fragmentos: aparecen uno a uno con → */
-.frag { opacity: 0; transform: translateY(.4rem); transition: opacity .3s, transform .3s; }
-.frag.is-shown { opacity: 1; transform: none; }
+.welcome { border: 1px solid var(--claude); border-radius: .4rem; padding: .7rem 1.1rem; margin-bottom: 1.2rem; width: fit-content; white-space: pre-wrap; }
+.welcome b { color: var(--claude); }
+.welcome .muted { color: var(--muted); }
 
-/* Terminal simulada */
-.term { background: #111; border: 1px solid var(--border); border-radius: .5rem; padding: 1rem 1.3rem; font-family: var(--mono); font-size: 1rem; line-height: 1.7; }
-.term .p { color: var(--ok); }
-.term .c { color: var(--muted); }
+.msg { margin: .5rem 0; white-space: pre-wrap; }
+.msg-user { margin: .9rem 0 .5rem; padding: .25rem .7rem; background: #262626; color: var(--muted); white-space: pre-wrap; border-left: 2px solid var(--dim); }
+.msg-user .t { color: var(--text); }
+.dot { margin-right: .5rem; }
+.dot--w { color: var(--text); } .dot--ok { color: var(--ok); } .dot--claude { color: var(--claude); }
+.tool b { color: var(--text); }
+.tool .arg { color: var(--muted); }
+.result { color: var(--muted); margin: 0 0 .4rem 1.1rem; white-space: pre-wrap; }
+.warn { color: var(--yellow); margin: .5rem 0; }
+
+.code { margin: .2rem 0 .4rem 1.1rem; border-left: 1px solid var(--border); padding-left: .8rem; font-size: .88rem; line-height: 1.5; }
+.code div { white-space: pre; }
+.code .ln { color: var(--dim); display: inline-block; width: 2.2rem; text-align: right; margin-right: .9rem; }
+.code .add { background: var(--add-bg); color: #b9e6c0; }
+.code .del { background: var(--del-bg); color: #f0b4b4; }
+.code .more { color: var(--muted); font-style: italic; }
+
+.spinner { color: var(--claude); margin: .5rem 0; }
+.spinner .muted { color: var(--muted); }
+
+/* Caja de entrada */
+.input { margin: 0 1.6rem; padding: .55rem 1rem; border: 1px solid var(--dim); border-radius: .4rem; min-height: 2.6rem; white-space: pre-wrap; }
+.input::before { content: "> "; color: var(--text); }
+.cursor { display: inline-block; width: .55rem; height: 1.05rem; background: var(--text); vertical-align: text-bottom; animation: parpadeo 1s steps(1) infinite; }
+@keyframes parpadeo { 50% { opacity: 0; } }
+
+/* Debajo de la caja: atajos o la status line */
+.footer { padding: .45rem 2.4rem .9rem; min-height: 4.4rem; white-space: pre; }
+.footer .hint { color: var(--muted); }
+#statusline { transition: background .4s; border-radius: .3rem; }
+#statusline.flash { animation: flash 1s ease; }
+@keyframes flash { 0% { background: rgba(86,156,214,.35); } 100% { background: transparent; } }
+#statusline.nueva { animation: aparece .8s ease; }
+@keyframes aparece { from { opacity: 0; transform: translateY(.5rem); } to { opacity: 1; transform: none; } }
+.seg { border-radius: .2rem; transition: box-shadow .25s, background .25s; }
+.seg.hl { background: rgba(86,156,214,.25); box-shadow: 0 0 0 2px var(--blue); }
 
 /* Colores tipo ANSI */
 .g { color: var(--muted); } .cy { color: var(--cyan); } .ve { color: var(--ok); }
-.am { color: var(--yellow); } .ro { color: var(--red); } .ma { color: var(--magenta); } .bl { color: var(--blue); }
+.am { color: var(--yellow); } .ro { color: var(--red); } .ma { color: var(--magenta); }
 b.w { color: #fff; }
 
-/* Diapositiva 2: preguntas */
-.chips { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.5rem; }
-.chip { font-size: 1.15rem; padding: .5rem 1rem; border: 1px dashed var(--yellow); color: var(--yellow); border-radius: 2rem; }
+/* --- Panel de guía --- */
+.guide { display: flex; flex-direction: column; padding: 2rem 2.2rem 1.4rem; background: var(--panel); min-height: 0; }
+.guide__step { font-family: var(--mono); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; color: var(--claude); margin-bottom: .9rem; }
+.guide__step::before { content: "── "; color: var(--dim); }
+.guide h2 { font-size: 2.1rem; line-height: 1.15; margin: 0 0 1.1rem; font-weight: 600; }
+.guide h2 em { font-style: normal; color: var(--claude); }
+.guide__body { flex: 1; font-size: 1.15rem; line-height: 1.55; overflow: hidden; }
+.guide__body p { margin: 0 0 1rem; }
+.guide__body ul { margin: 0 0 1rem; padding-left: 1.2rem; }
+.guide__body li { margin-bottom: .45rem; }
+.guide__body li.hl { color: #fff; }
+.guide__body li.hl::marker { color: var(--blue); }
+.guide__body code { font-family: var(--mono); font-size: .92em; color: var(--cyan); }
+.guide__body .note { border-left: 3px solid var(--claude); padding: .5rem .9rem; background: rgba(217,119,87,.08); font-size: 1.05rem; }
+.guide__enter { animation: entra .4s ease; }
+@keyframes entra { from { opacity: 0; transform: translateX(.8rem); } to { opacity: 1; transform: none; } }
 
-/* Diapositiva 3: encuesta */
-.hand { font-size: 5rem; margin-bottom: 1rem; }
-.q { font-size: 2.4rem; margin: 0 0 1rem; }
-.q em { font-style: normal; color: var(--blue); }
+.flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: .4rem; margin: .3rem 0 1.2rem; text-align: center; font-size: .95rem; }
+.flow div { background: #1b1b1b; border: 1px solid var(--border); border-radius: .4rem; padding: .55rem .3rem; }
+.flow div.you { border-color: var(--claude); }
+.flow span { color: var(--claude); }
+.flow small { display: block; font-family: var(--mono); font-size: .75rem; color: var(--muted); }
+.map { width: 100%; border-collapse: collapse; font-size: 1rem; }
+.map td { padding: .35rem .4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.map tr.hl td { background: rgba(86,156,214,.15); }
+.map td:first-child { color: #fff; white-space: nowrap; }
 
-/* Diapositiva 4: flujo */
-.flow { display: flex; align-items: stretch; gap: .6rem; margin: 1rem 0 2rem; }
-.flow__box { flex: 1; background: var(--bg-2); border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; text-align: center; }
-.flow__box b { display: block; font-size: 1.2rem; margin-bottom: .3rem; }
-.flow__box span { font-family: var(--mono); font-size: .85rem; color: var(--muted); }
-.flow__box--you { border-color: var(--blue); }
-.flow__arrow { align-self: center; color: var(--blue); font-size: 1.6rem; }
+.guide__foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; font-size: .8rem; color: var(--muted); }
+.dots { display: flex; gap: .4rem; }
+.dots i { width: .55rem; height: .55rem; border-radius: 50%; background: var(--dim); }
+.dots i.on { background: var(--claude); }
+.dots i.done { background: var(--muted); }
+.next-hint { font-family: var(--mono); }
+.next-hint.wait { color: var(--claude); }
 
-/* Diapositiva 5: JSON */
-.split { display: grid; grid-template-columns: 1.3fr 1fr; gap: 3rem; align-items: center; }
-.json { background: #111; border: 1px solid var(--border); border-radius: .5rem; padding: 1rem 1.3rem; font-size: .95rem; line-height: 1.55; margin: 0; }
-.json .k { color: #9cdcfe; } .json .s { color: var(--orange); } .json .n { color: #b5cea8; }
-.json .hl { background: rgba(86,156,214,.18); border-left: 3px solid var(--blue); margin-left: -1.3rem; padding-left: calc(1.3rem - 3px); display: inline-block; width: calc(100% + 2.6rem); }
-.fields { list-style: none; padding: 0; margin: 0; font-size: 1.2rem; line-height: 2.1; }
-.fields code { color: var(--cyan); font-size: 1rem; }
-
-/* Listas con icono */
-.ticks { list-style: none; padding: 0; margin: 0 0 2rem; font-size: 1.4rem; line-height: 2.1; }
-.ticks li::before { content: "▸ "; color: var(--blue); }
-.callouts { display: flex; gap: 1rem; }
-.callout { background: var(--bg-2); border-left: 3px solid var(--cyan); padding: .8rem 1.2rem; font-size: 1.1rem; border-radius: 0 .4rem .4rem 0; }
-
-/* Diapositiva 7: demo en 4 pasos */
-.steps { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-.step { background: var(--bg-2); border: 1px solid var(--border); border-radius: .5rem; padding: 1rem 1.2rem; }
-.step__n { font-family: var(--mono); font-size: .8rem; color: var(--blue); letter-spacing: .1em; }
-.step--wide { grid-column: 1 / -1; }
-.step h3 { margin: .2rem 0 .6rem; font-size: 1.25rem; }
-.step pre { margin: 0 0 .6rem; background: #111; padding: .6rem .8rem; border-radius: .3rem; font-size: .78rem; line-height: 1.45; overflow: hidden; }
-.step .out { font-family: var(--mono); font-size: .9rem; background: #000; padding: .4rem .8rem; border-radius: .3rem; white-space: pre; }
-
-/* Diapositiva 8: la mía, con anotaciones */
-.mine { font-family: var(--mono); font-size: 1.3rem; line-height: 1.8; background: #000; border: 1px solid var(--border); border-radius: .5rem; padding: 1rem 1.5rem; margin-bottom: 2rem; white-space: pre; }
-.legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: .8rem 1.5rem; font-size: 1.05rem; }
-.legend div b { display: block; font-family: var(--mono); color: var(--cyan); font-weight: 400; }
-
-/* Diapositiva 10: errores */
-.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-.card { background: var(--bg-2); border: 1px solid var(--border); border-left: 3px solid var(--red); border-radius: .4rem; padding: 1rem 1.3rem; }
-.card h3 { margin: 0 0 .4rem; font-size: 1.25rem; }
-.card p { margin: 0; color: var(--muted); font-size: 1.05rem; line-height: 1.5; }
-.card p code { color: var(--orange); }
-
-/* Diapositiva 11: revelación */
-.reveal-arrow { font-size: 4rem; color: var(--blue); animation: baja 1.2s ease-in-out infinite; }
-@keyframes baja { 50% { transform: translateY(.8rem); } }
-.statusline.is-pulse { animation: pulso 1.4s ease-in-out infinite; }
-@keyframes pulso { 50% { box-shadow: inset 0 0 0 2px var(--blue), 0 0 2.5rem rgba(86,156,214,.45); } }
-
-/* Diapositiva 12: cierre */
-.url { font-family: var(--mono); font-size: 2rem; color: var(--cyan); margin: 1rem 0 .5rem; }
-
-/* --- Entrada de Claude Code y status line (abajo, como en la terminal) --- */
-.prompt { margin: 0 1rem; padding: .5rem 1rem; border: 1px solid var(--border); border-radius: .4rem; font-family: var(--mono); font-size: .95rem; color: var(--muted); }
-.prompt::before { content: "> "; color: var(--text); }
-.cursor { display: inline-block; width: .55rem; height: 1rem; background: var(--muted); vertical-align: middle; animation: parpadeo 1s steps(1) infinite; }
-@keyframes parpadeo { 50% { opacity: 0; } }
-.statusline { padding: .4rem 2rem .6rem; font-family: var(--mono); font-size: .95rem; line-height: 1.6; white-space: pre; }
-
-/* --- Notas del presentador (tecla N) --- */
-.notes { position: absolute; right: 1rem; bottom: 1rem; width: 30rem; max-height: 60%; overflow: auto; background: #111; border: 1px solid var(--yellow); border-radius: .4rem; padding: 1rem 1.2rem; font-size: 1rem; line-height: 1.5; z-index: 5; }
-.notes__lbl { font-family: var(--mono); font-size: .75rem; color: var(--yellow); letter-spacing: .1em; margin-bottom: .4rem; }
+/* Notas del presentador (tecla N) */
+.notes { position: fixed; left: 1rem; top: 3.2rem; width: 34rem; background: #111; border: 1px solid var(--yellow); border-radius: .4rem; padding: .9rem 1.1rem; font-size: 1rem; line-height: 1.5; z-index: 5; }
+.notes b { display: block; font-family: var(--mono); font-size: .75rem; color: var(--yellow); letter-spacing: .1em; margin-bottom: .3rem; }
 </style>
 </head>
 <body>
 <div class="app">
-
   <header class="titlebar">
-    <svg class="titlebar__logo" viewBox="0 0 100 100" aria-hidden="true"><path d="M76 8L96 18V82L76 92L32 56L14 70L4 64V36L14 30L32 44L76 8ZM76 28L46 50L76 72V28Z" fill="#007acc"/></svg>
+    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M76 8L96 18V82L76 92L32 56L14 70L4 64V36L14 30L32 44L76 8ZM76 28L46 50L76 72V28Z" fill="#007acc"/></svg>
     <a class="back" id="backLink" href="/charlas/statuslinebar/" target="_top">← Volver a la charla</a>
-    <span class="titlebar__title">statuslinebar — Visual Studio Code</span>
-    <span class="titlebar__keys"><kbd>←</kbd><kbd>→</kbd> navegar <kbd>N</kbd> notas <kbd>F</kbd> pantalla completa</span>
+    <div class="titlebar__tabs"><span>PROBLEMS</span><span>OUTPUT</span><span class="on">TERMINAL</span></div>
+    <span class="titlebar__title">claude — talks</span>
+    <span><kbd>→</kbd> siguiente <kbd>←</kbd> anterior <kbd>R</kbd> repetir <kbd>N</kbd> notas <kbd>F</kbd> pantalla completa</span>
   </header>
-  <div class="tabs"><span class="tab" id="tabName">01-portada.md</span></div>
 
-  <main class="stage" id="stage">
-
-    <!-- 1 · Portada -->
-    <section class="slide" data-file="01-portada.md"
-      data-notes="Hoy vengo a hablar de una línea. Literalmente, una: la de abajo del todo. No la señales todavía, se revela al final.">
-      <div class="eyebrow">AI Lightning Talks with Claude</div>
-      <h1>Activando la <em>statusline bar</em><br>en Claude Cli.</h1>
-      <p class="sub">Tu panel de control en la terminal: un script de pocas líneas y dejas de trabajar a ciegas.</p>
-      <div class="who"><b>Joan</b> · QA Tester</div>
+  <div class="main">
+    <section class="term" id="term">
+      <div class="transcript" id="transcript"></div>
+      <div class="input" id="input"><span id="inputText"></span><span class="cursor"></span></div>
+      <div class="footer"><div id="statusline"></div><div class="hint" id="hint">? for shortcuts</div></div>
     </section>
 
-    <!-- 2 · El problema -->
-    <section class="slide" data-file="02-problema.log"
-      data-notes="Trabajando con Claude Code me pasaba esto: descubría que se me acababa el contexto o el límite de uso cuando ya era tarde. Pasa las preguntas una a una.">
-      <div class="eyebrow">El problema</div>
-      <h2>Trabajar <em>a ciegas.</em></h2>
-      <div class="term">
-        <div><span class="p">❯</span> refactoriza el módulo de pagos y añade tests</div>
-        <div class="c">● Leyendo 14 archivos…</div>
-        <div class="c">● Editando src/pagos/cobro.ts</div>
-        <div class="ro">⚠ Context low · /compact recommended</div>
+    <aside class="guide" id="guide">
+      <div id="guideContent"></div>
+      <div class="guide__foot">
+        <div class="dots" id="dots"></div>
+        <div class="next-hint" id="nextHint">→ siguiente</div>
       </div>
-      <div class="chips">
-        <span class="chip frag">¿Cuánto contexto llevo?</span>
-        <span class="chip frag">¿Cuánto me queda del límite de 5 h?</span>
-        <span class="chip frag">¿En qué rama estoy?</span>
-        <span class="chip frag">¿Cuánto llevo gastado?</span>
-      </div>
-    </section>
-
-    <!-- 3 · Pregunta a la sala -->
-    <section class="slide" data-file="03-pregunta.md"
-      data-notes="Pausa real, espera a que levanten la mano. Si nadie ha tocado la status line, perfecto: es para ellos. Si muchos, ve más rápido a la demo.">
-      <div class="hand">✋</div>
-      <p class="q">¿Quién usa <em>Claude Code</em>?</p>
-      <p class="q frag">¿Y quién ha tocado la <em>status line</em>?</p>
-    </section>
-
-    <!-- 4 · Qué es -->
-    <section class="slide" data-file="04-que-es.md"
-      data-notes="Claude Code le pasa un JSON a un script tuyo y lo que imprimas aparece abajo. Ya está, no hay más magia. Cualquier lenguaje que lea stdin y escriba stdout sirve.">
-      <div class="eyebrow">Qué es</div>
-      <h2>Un script tuyo. <em>Nada más.</em></h2>
-      <div class="flow">
-        <div class="flow__box"><b>Claude Code</b><span>estado de la sesión</span></div>
-        <div class="flow__arrow">→</div>
-        <div class="flow__box"><b>JSON</b><span>por stdin</span></div>
-        <div class="flow__arrow">→</div>
-        <div class="flow__box flow__box--you"><b>Tu script</b><span>Node · Python · Bash…</span></div>
-        <div class="flow__arrow">→</div>
-        <div class="flow__box"><b>Texto</b><span>por stdout</span></div>
-        <div class="flow__arrow">→</div>
-        <div class="flow__box"><b>La barra</b><span>abajo del todo</span></div>
-      </div>
-      <pre class="json frag">{
-  <span class="k">"statusLine"</span>: {
-    <span class="k">"type"</span>: <span class="s">"command"</span>,
-    <span class="k">"command"</span>: <span class="s">"node C:/Users/joan/.claude/statusline.js"</span>
-  }
-}</pre>
-      <p class="muted frag">Va en <code>~/.claude/settings.json</code>. Guardas y se aplica al momento.</p>
-    </section>
-
-    <!-- 5 · Qué datos recibes -->
-    <section class="slide" data-file="05-datos.json"
-      data-notes="Hay más de 30 campos. Estos 5 son los que más uso. Los límites de 5 h y 7 días solo llegan con plan Pro o Max.">
-      <div class="eyebrow">Qué datos recibes</div>
-      <div class="split">
-        <pre class="json">{
-<span class="hl">  <span class="k">"model"</span>: { <span class="k">"display_name"</span>: <span class="s">"Opus"</span> },</span>
-<span class="hl">  <span class="k">"workspace"</span>: { <span class="k">"current_dir"</span>: <span class="s">"C:/…/talks"</span> },</span>
-  <span class="k">"effort"</span>: { <span class="k">"level"</span>: <span class="s">"high"</span> },
-<span class="hl">  <span class="k">"context_window"</span>: { <span class="k">"used_percentage"</span>: <span class="n">42</span> },</span>
-  <span class="k">"rate_limits"</span>: {
-<span class="hl">    <span class="k">"five_hour"</span>: { <span class="k">"used_percentage"</span>: <span class="n">24</span>, <span class="k">"resets_at"</span>: <span class="n">1791640000</span> },</span>
-    <span class="k">"seven_day"</span>: { <span class="k">"used_percentage"</span>: <span class="n">81</span> }
-  },
-<span class="hl">  <span class="k">"cost"</span>: { <span class="k">"total_cost_usd"</span>: <span class="n">1.37</span> },</span>
-  <span class="g">… +30 campos más</span>
-}</pre>
-        <ul class="fields">
-          <li class="frag"><code>model</code> qué modelo uso</li>
-          <li class="frag"><code>current_dir</code> en qué carpeta estoy</li>
-          <li class="frag"><code>used_percentage</code> cuánto contexto llevo</li>
-          <li class="frag"><code>five_hour</code> mi límite de uso y cuándo se reinicia</li>
-          <li class="frag"><code>total_cost_usd</code> el coste estimado</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- 7 · Demo -->
-    <section class="slide" data-file="06-demo.sh"
-      data-notes="DEMO EN VIVO en VS Code. Esta diapositiva es el plan B: si algo falla, pasa los pasos aquí. Paso 2: el ?. y el ?? son porque al empezar la sesión algunos campos llegan vacíos. Paso 3: cambia el command a tu script real y explica que ya no lees el número, ves el color.">
-      <div class="eyebrow">Demo · de cero a útil</div>
-      <div class="steps">
-        <div class="step frag">
-          <div class="step__n">PASO 1</div><h3>Lo mínimo</h3>
-          <pre><span class="k">"command"</span>: <span class="s">"echo Hola desde la status line"</span></pre>
-          <div class="out">Hola desde la status line</div>
-        </div>
-        <div class="step frag">
-          <div class="step__n">PASO 2</div><h3>Leer el JSON</h3>
-          <pre>const d = JSON.parse(input);
-const pct = Math.round(d.context_window?.used_percentage ?? 0);
-console.log(`${d.model.display_name} | ctx: ${pct}%`);</pre>
-          <div class="out">Opus | ctx: 42%</div>
-        </div>
-        <div class="step step--wide frag">
-          <div class="step__n">PASO 3</div><h3>La mía: barra, colores y límites</h3>
-          <pre><span class="k">"command"</span>: <span class="s">"node C:/Users/joan/.claude/statusline.js"</span>,
-<span class="k">"refreshInterval"</span>: <span class="n">60</span></pre>
-          <div class="out"><b class="w">talks</b> <span class="g">|</span> <span class="ve">main</span> <span class="g">|</span> <span class="cy">Opus</span> <span class="g">effort:</span><span class="ma">high</span> <span class="g">| ctx:[</span><span class="ve">████</span><span class="g">░░░░░░]</span> <span class="ve">42%</span></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 8 · Mi status line -->
-    <section class="slide" data-file="07-la-mia.js"
-      data-notes="Explica cada trozo señalando. Verde, amarillo, rojo: no tengo que leer números. La cuenta atrás es lo que más uso: sé cuándo vuelvo a tener límite.">
-      <div class="eyebrow">Mi status line</div>
-      <div class="mine"><b class="w">talks</b> <span class="g">|</span> <span class="ve">main</span> <span class="g">|</span> <span class="cy">Opus</span> <span class="g">effort:</span><span class="ma">high</span> <span class="g">| ctx:[</span><span class="ve">████</span><span class="g">░░░░░░]</span> <span class="ve">42%</span>
-<span class="g">5h:[</span><span class="ve">██</span><span class="g">░░░░░░░░]</span> <span class="ve">24%</span> <span class="g">↻2h23m | 7d:[</span><span class="ro">████████</span><span class="g">░░]</span> <span class="ro">81%</span> <span class="g">↻2d23h | cost:</span>$1.37</div>
-      <div class="legend">
-        <div class="frag"><b>talks</b>carpeta</div>
-        <div class="frag"><b>main</b>rama de git</div>
-        <div class="frag"><b>Opus effort:high</b>modelo y esfuerzo</div>
-        <div class="frag"><b>ctx</b>contexto usado</div>
-        <div class="frag"><b>5h ↻2h23m</b>límite y cuenta atrás</div>
-        <div class="frag"><b>7d</b>límite semanal</div>
-        <div class="frag"><b>cost</b>coste estimado</div>
-        <div class="frag"><b><span class="ve">■</span> <span class="am">■</span> <span class="ro">■</span></b>&lt; 50 · &lt; 80 · ≥ 80 %</div>
-      </div>
-    </section>
-
-    <!-- 9 · El atajo -->
-    <section class="slide" data-file="08-atajo.md"
-      data-notes="Si no queréis escribir código, se lo pedís en lenguaje natural y Claude Code genera el script y actualiza el settings.json. Para quitarla: /statusline delete.">
-      <div class="eyebrow">El atajo</div>
-      <h2>¿Sin código? <em>Pídeselo.</em></h2>
-      <div class="term">
-        <div><span class="p">❯</span> /statusline muestra el modelo y el contexto con una barra</div>
-        <div class="c frag">● Creando ~/.claude/statusline.sh</div>
-        <div class="c frag">● Actualizando ~/.claude/settings.json</div>
-        <div class="ve frag">✓ Status line configurada</div>
-      </div>
-    </section>
-
-    <!-- 11 · Revelación -->
-    <section class="slide" data-file="09-revelacion.md" data-reveal
-      data-notes="Señala la barra de abajo. Deja que la miren unos segundos. Su ctx es el avance de la charla y el reloj es el tiempo que llevamos.">
-      <h2>Esta barra la habéis visto<br><em>toda la charla.</em></h2>
-      <p class="sub">Su <code>ctx</code> es lo que llevamos de charla. Su reloj, el tiempo. Ahora sabéis hacerla.</p>
-      <div class="reveal-arrow">↓</div>
-    </section>
-
-    <!-- 12 · Cierre -->
-    <section class="slide" data-file="10-cierre.md"
-      data-notes="Os dejo el script y la documentación en la web. Preguntas.">
-      <div class="eyebrow">Ahora os toca</div>
-      <h2>Escribid <code class="bl">/statusline</code><br><em>hoy mismo.</em></h2>
-      <div class="url">iatalks.pages.dev</div>
-      <p class="muted big">Documentación: code.claude.com/docs/en/statusline</p>
-      <p class="who">¿Preguntas?</p>
-    </section>
-
-    <aside class="notes" id="notes" hidden>
-      <div class="notes__lbl">NOTAS DEL PRESENTADOR</div>
-      <div id="notesText"></div>
     </aside>
-  </main>
-
-  <div class="prompt"><span class="cursor"></span></div>
-  <footer class="statusline" id="statusline"></footer>
+  </div>
 </div>
+<div class="notes" id="notes" hidden><b>NOTAS DEL PRESENTADOR</b><span id="notesText"></span></div>
 
 <script>
-const slides = [...document.querySelectorAll(".slide")];
-const statusline = document.getElementById("statusline");
-const notes = document.getElementById("notes");
-const inicio = Date.now();
-let actual = 0;
+/* ============================================================
+   1. Motor de animación
+   - sleep() espera, salvo en "modo rápido" (skipping), que termina al instante.
+   - Cambiar de escena incrementa `gen`: las animaciones viejas se cancelan.
+   ============================================================ */
+const ABORT = Symbol("abort");
+let skipping = false;  // true = completar la animación actual sin esperas
+let gen = 0;           // generación: cambia al saltar de escena
+let pendientes = [];   // esperas en curso (para poder adelantarlas)
 
-// Dentro de un iframe (en la página de la charla) el enlace "Volver" sobra.
-if (window.self !== window.top) document.getElementById("backLink").hidden = true;
-
-// --- Status line: mismo formato que ~/.claude/statusline.js ---
-function color(pct) {
-  if (pct >= 80) return "ro";
-  if (pct >= 50) return "am";
-  return "ve";
+function sleep(ms) {
+  const g = gen;
+  if (skipping) return g === gen ? Promise.resolve() : Promise.reject(ABORT);
+  return new Promise((resolve, reject) => {
+    const done = () => {
+      clearTimeout(t);
+      pendientes = pendientes.filter((f) => f !== done);
+      g === gen ? resolve() : reject(ABORT);
+    };
+    const t = setTimeout(done, ms);
+    pendientes.push(done);
+  });
 }
 
-function barra(pct) {
-  const llenos = Math.round(pct / 10);
-  const c = color(pct);
-  return `<span class="g">[</span><span class="${c}">${"█".repeat(llenos)}</span>` +
-         `<span class="g">${"░".repeat(10 - llenos)}]</span> <span class="${c}">${pct}%</span>`;
+function adelantar() {          // termina ya la animación en curso
+  skipping = true;
+  pendientes.slice().forEach((f) => f());
 }
 
-function pintarStatusline() {
-  const pct = Math.round((actual / (slides.length - 1)) * 100);
-  const seg = Math.floor((Date.now() - inicio) / 1000);
-  const tiempo = `${Math.floor(seg / 60)}m${String(seg % 60).padStart(2, "0")}s`;
-  const sep = ` <span class="g">|</span> `;
-  const linea1 = [
-    `<b class="w">statuslinebar</b>`,
-    `<span class="ve">main</span>`,
-    `<span class="cy">Opus</span> <span class="g">effort:</span><span class="ma">high</span>`,
-    `<span class="g">ctx:</span>${barra(pct)}`,
-  ].join(sep);
-  const linea2 = [
-    `<span class="g">slide:</span>${actual + 1}/${slides.length}`,
-    `<span class="g">⏱</span> ${tiempo}`,
-    `<span class="g">cost:</span>$0.00`,
-  ].join(sep);
-  statusline.innerHTML = linea1 + "\n" + linea2;
+/* ============================================================
+   2. Piezas de la terminal
+   ============================================================ */
+const $ = (id) => document.getElementById(id);
+const transcript = $("transcript");
+const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+function add(cls, html) {
+  const e = document.createElement("div");
+  e.className = cls;
+  e.innerHTML = html;
+  transcript.appendChild(e);
+  return e;
 }
 
-// --- Navegación ---
-function mostrar(i, revelarTodo = false) {
-  actual = Math.max(0, Math.min(slides.length - 1, i));
-  slides.forEach((s, n) => s.classList.toggle("is-on", n === actual));
-  const slide = slides[actual];
-  slide.querySelectorAll(".frag").forEach((f) => f.classList.toggle("is-shown", revelarTodo));
-  document.getElementById("tabName").textContent = slide.dataset.file;
-  document.getElementById("notesText").textContent = slide.dataset.notes || "";
-  statusline.classList.toggle("is-pulse", slide.hasAttribute("data-reveal"));
-  // replaceState: cambia la URL sin llenar el historial (atrás vuelve a la web)
-  history.replaceState(null, "", "#" + (actual + 1));
-  pintarStatusline();
+async function escribirPrompt(texto, velocidad = 32) {
+  const el = $("inputText");
+  el.textContent = "";
+  if (skipping) { el.textContent = texto; return; }
+  for (const ch of texto) {
+    el.textContent += ch;
+    await sleep(velocidad + Math.random() * 25);
+  }
+  await sleep(450);
 }
 
-function siguiente() {
-  const pendiente = slides[actual].querySelector(".frag:not(.is-shown)");
-  if (pendiente) pendiente.classList.add("is-shown");
-  else mostrar(actual + 1);
+async function enviar() {
+  const texto = $("inputText").textContent;
+  $("inputText").textContent = "";
+  add("msg-user", `&gt; <span class="t">${esc(texto)}</span>`);
+  await sleep(350);
 }
 
-function anterior() {
-  mostrar(actual - 1, true);
+const FRAMES = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
+async function pensar(ms, etiqueta = "Pensando…") {
+  const e = add("spinner", "");
+  const inicio = Date.now();
+  let i = 0;
+  try {
+    while (!skipping && Date.now() - inicio < ms) {
+      const seg = Math.floor((Date.now() - inicio) / 1000);
+      e.innerHTML = `${FRAMES[i++ % FRAMES.length]} ${etiqueta} <span class="muted">(${seg}s · esc to interrupt)</span>`;
+      await sleep(110);
+    }
+  } finally {
+    e.remove();
+  }
+}
+
+async function dice(html) {
+  add("msg", `<span class="dot dot--w">●</span>${html}`);
+  await sleep(600);
+}
+
+// Una llamada a herramienta: ● Write(ruta), un bloque de código opcional y ⎿ resultado
+async function herramienta(nombre, arg, resultado, lineas = null, mas = null) {
+  add("msg tool", `<span class="dot dot--ok">●</span><b>${nombre}</b><span class="arg">(${esc(arg)})</span>`);
+  await sleep(400);
+  if (lineas) {
+    const bloque = add("code", "");
+    for (const [tipo, num, texto] of lineas) {
+      const d = document.createElement("div");
+      if (tipo) d.className = tipo;
+      const signo = tipo === "add" ? "+" : tipo === "del" ? "-" : " ";
+      d.innerHTML = `<span class="ln">${num ?? ""}</span>${signo} ${esc(texto)}`;
+      bloque.appendChild(d);
+      await sleep(70);
+    }
+    if (mas) {
+      const d = document.createElement("div");
+      d.className = "more";
+      d.textContent = mas;
+      bloque.appendChild(d);
+    }
+  }
+  add("result", `⎿  ${resultado}`);
+  await sleep(600);
+}
+
+/* --- Status line (mismo formato que ~/.claude/statusline.js) --- */
+let st = null; // null = todavía no hay status line
+
+function color(p) { return p >= 80 ? "ro" : p >= 50 ? "am" : "ve"; }
+function barra(p) {
+  const n = Math.round(p / 10), c = color(p);
+  return `<span class="g">[</span><span class="${c}">${"█".repeat(n)}</span><span class="g">${"░".repeat(10 - n)}]</span> <span class="${c}">${p}%</span>`;
+}
+const seg = (id, html) => `<span class="seg" data-seg="${id}">${html}</span>`;
+const SEP = ` <span class="g">|</span> `;
+
+function pintarStatus(efecto) {
+  const el = $("statusline");
+  $("hint").hidden = !!st; // con status line, Claude Code oculta casi todos los atajos
+  if (!st) { el.innerHTML = ""; return; }
+  const l1 = [
+    seg("carpeta", `<b class="w">talks</b>`),
+    seg("rama", `<span class="ve">main</span>`),
+    seg("modelo", `<span class="cy">Opus</span>`),
+    seg("ctx", `<span class="g">ctx:</span>${barra(st.ctx)}`),
+  ].join(SEP);
+  let html = l1;
+  if (st.linea2) {
+    html += "\n" + [
+      seg("5h", `<span class="g">5h:</span>${barra(24)} <span class="g">↻2h23m</span>`),
+      seg("7d", `<span class="g">7d:</span>${barra(61)} <span class="g">↻3d4h</span>`),
+      seg("coste", `<span class="g">cost:</span>$1.37`),
+    ].join(SEP);
+  }
+  el.innerHTML = html;
+  if (efecto && !skipping) {
+    el.classList.remove("flash", "nueva");
+    void el.offsetWidth; // reinicia la animación CSS
+    el.classList.add(efecto);
+  }
+}
+
+async function status(cambios, efecto = "flash") {
+  st = { ...(st || {}), ...cambios };
+  pintarStatus(efecto);
+  await sleep(900);
+}
+
+async function resaltar(segmentos) {
+  for (const id of segmentos) {
+    document.querySelectorAll(`[data-seg="${id}"]`).forEach((e) => e.classList.add("hl"));
+    document.querySelectorAll(`[data-map="${id}"]`).forEach((e) => e.classList.add("hl"));
+    await sleep(1300);
+    document.querySelectorAll(".hl").forEach((e) => e.classList.remove("hl"));
+  }
+}
+
+/* ============================================================
+   3. El guion: escenas con su guía, sus notas y sus pasos
+   ============================================================ */
+const CODIGO_SCRIPT = [
+  [null, 1, "// Status line: lee el JSON de la sesión por stdin y pinta una línea"],
+  [null, 2, 'const { execSync } = require("child_process");'],
+  [null, 3, 'const path = require("path");'],
+  [null, 4, ""],
+  [null, 5, 'let input = "";'],
+  [null, 6, 'process.stdin.on("data", (c) => (input += c));'],
+  [null, 7, 'process.stdin.on("end", () => {'],
+  [null, 8, "  const d = JSON.parse(input);"],
+  [null, 9, "  const carpeta = path.basename(d.workspace.current_dir);"],
+  [null, 10, '  const rama = execSync("git branch --show-current").toString().trim();'],
+  [null, 11, "  const pct = Math.round(d.context_window?.used_percentage ?? 0);"],
+];
+
+const DIFF_SETTINGS = [
+  [null, 1, "{"],
+  [null, 2, '  "permissions": { … },'],
+  ["add", 3, '  "statusLine": {'],
+  ["add", 4, '    "type": "command",'],
+  ["add", 5, '    "command": "node C:/Users/joan/.claude/statusline.js"'],
+  ["add", 6, "  }"],
+  [null, 7, "}"],
+];
+
+const DIFF_LINEA2 = [
+  [null, 31, "  const linea1 = [carpeta, rama, modelo, ctx].join(SEP);"],
+  ["add", 32, "  const linea2 = ["],
+  ["add", 33, '    ventana("5h", d.rate_limits?.five_hour),'],
+  ["add", 34, '    ventana("7d", d.rate_limits?.seven_day),'],
+  ["add", 35, "    `cost:$${d.cost.total_cost_usd.toFixed(2)}`,"],
+  ["add", 36, "  ].filter(Boolean);"],
+  ["del", 37, "  process.stdout.write(linea1);"],
+  ["add", 37, '  process.stdout.write(linea1 + "\\n" + linea2.join(SEP));'],
+];
+
+const SCENES = [
+  {
+    step: "AI Lightning Talks with Claude",
+    title: "Activando la <em>statusline bar</em> en Claude Cli",
+    body: `<p>Esto es Claude Code en el terminal de VS Code.</p>
+           <p>Fijaos en la parte de abajo: solo hay atajos de teclado. <b>Ninguna información de la sesión.</b></p>
+           <p class="note">Joan · QA Tester</p>`,
+    notes: "Hoy vengo a hablar de una línea. Literalmente, una: la de abajo. Ahora mismo está vacía.",
+    beats: [async () => {
+      add("welcome", `<b>✻</b> Welcome to <b>Claude Code</b>!\n\n<span class="muted">  /help for help, /status for your current setup\n\n  cwd: C:/Users/joan/Desktop/talks</span>`);
+      await sleep(300);
+    }],
+  },
+  {
+    step: "01 · El problema",
+    title: "Trabajar <em>a ciegas</em>",
+    body: `<p>Le pido una tarea larga. Claude lee y edita archivos… y yo no sé:</p>
+           <ul><li>¿Cuánto contexto llevo?</li><li>¿Cuánto me queda del límite de uso?</li>
+           <li>¿En qué rama estoy?</li><li>¿Cuánto llevo gastado?</li></ul>
+           <p>Hasta que aparece el aviso. Y ya es tarde.</p>`,
+    notes: "Me pasaba esto: descubría que se acababa el contexto cuando ya era tarde. Deja que se vea el aviso amarillo.",
+    beats: [async () => {
+      await escribirPrompt("refactoriza el módulo de pagos y añade tests");
+      await enviar();
+      await pensar(1500);
+      await herramienta("Read", "src/pagos/cobro.ts", "Read 214 lines");
+      await herramienta("Update", "src/pagos/cobro.ts", "Updated with 38 additions and 12 removals");
+      await herramienta("Write", "tests/cobro.test.ts", "Wrote 96 lines to tests/cobro.test.ts");
+      add("warn", "⚠ Context low (9% remaining) · Run /compact to compact & continue");
+      await sleep(500);
+    }],
+  },
+  {
+    step: "02 · El atajo",
+    title: "Se lo pido <em>en lenguaje natural</em>",
+    body: `<p>El comando <code>/statusline</code> acepta una descripción de lo que quieres ver.</p>
+           <p>Claude Code escribe el script y lo configura por ti.</p>
+           <p class="note">No hace falta saber programar para tener la tuya.</p>`,
+    notes: "Escribe despacio, que lean el prompt. Es el momento clave: un comando y una frase.",
+    beats: [async () => {
+      await escribirPrompt("/statusline muestra la carpeta, la rama, el modelo y el contexto con una barra de colores", 28);
+      await enviar();
+    }],
+  },
+  {
+    step: "03 · Lo que implementa",
+    title: "Un script y <em>una línea de configuración</em>",
+    body: `<div class="flow"><div>Claude Code<small>JSON · stdin</small></div><span>→</span><div class="you">tu script<small>statusline.js</small></div><span>→</span><div>la barra<small>texto · stdout</small></div></div>
+           <ul><li><code>statusline.js</code>: lee el JSON que le pasa Claude Code e imprime una línea.</li>
+           <li><code>settings.json</code>: le dice a Claude Code qué comando ejecutar.</li></ul>
+           <p>No hay más magia: cualquier lenguaje que lea stdin y escriba stdout sirve.</p>`,
+    notes: "Señala el diagrama mientras aparece el código. Después del settings.json, la barra aparece sola. Y lo primero que veo: estoy al 91 %, en rojo.",
+    beats: [
+      async () => {
+        await pensar(1300);
+        await dice("Voy a crear un script en Node que lea el JSON de la sesión y pinte la barra.");
+        await herramienta("Write", "~/.claude/statusline.js", "Wrote 42 lines to ~/.claude/statusline.js", CODIGO_SCRIPT, "… +31 lines (ctrl+r to expand)");
+      },
+      async () => {
+        await herramienta("Update", "~/.claude/settings.json", "Updated with 4 additions", DIFF_SETTINGS);
+        await dice("Listo. La status line se actualizará con cada mensaje.");
+        await status({ ctx: 91 }, "nueva");
+      },
+    ],
+  },
+  {
+    step: "04 · Qué datos recibe",
+    title: "Cada trozo sale <em>de un campo</em>",
+    body: `<table class="map">
+             <tr data-map="carpeta"><td>talks</td><td><code>workspace.current_dir</code></td></tr>
+             <tr data-map="rama"><td>main</td><td><code>git branch</code>: no viene en el JSON, lo calcula el script</td></tr>
+             <tr data-map="modelo"><td>Opus</td><td><code>model.display_name</code></td></tr>
+             <tr data-map="ctx"><td>ctx 91%</td><td><code>context_window.used_percentage</code></td></tr>
+           </table>
+           <p style="margin-top:1rem">Hay más de 30 campos: coste, límites de uso, effort, worktree, PR abierta…</p>`,
+    notes: "Va resaltando cada trozo de la barra a la vez que su fila. La rama es el truco: el script puede ejecutar comandos, no solo leer el JSON.",
+    beats: [async () => { await resaltar(["carpeta", "rama", "modelo", "ctx"]); }],
+  },
+  {
+    step: "05 · Se actualiza sola",
+    title: "Cuando algo <em>cambia</em>",
+    body: `<ul><li>Llega un mensaje nuevo</li><li>Termina un <code>/compact</code></li>
+           <li>Cambias el modo de permisos</li><li>Cada N segundos, con <code>refreshInterval</code></li></ul>
+           <p class="note">Agrupa los cambios cada 300 ms y se ejecuta en local: <b>no gasta tokens</b>.</p>`,
+    notes: "Primero el /compact: la barra baja de rojo a verde. Luego un mensaje normal: sube un poco. Nadie ha tocado nada, se actualiza sola.",
+    beats: [
+      async () => {
+        await escribirPrompt("/compact");
+        await enviar();
+        await pensar(1600, "Compacting conversation…");
+        add("result", "⎿  Compacted. ctrl+r to see full summary");
+        await sleep(300);
+        await status({ ctx: 9 });
+      },
+      async () => {
+        await escribirPrompt("añade tests para el cálculo del IVA");
+        await enviar();
+        await pensar(1200);
+        await herramienta("Update", "tests/cobro.test.ts", "Updated with 24 additions");
+        await status({ ctx: 27 });
+      },
+    ],
+  },
+  {
+    step: "06 · Iterar",
+    title: "Es tu script: <em>pídele cambios</em>",
+    body: `<p>Quiero ver también los límites de uso y el coste. Se lo pido igual que cualquier otra tarea.</p>
+           <ul><li><code>5h</code> y <code>7d</code>: tus límites, con la cuenta atrás hasta que se reinician.</li>
+           <li><code>cost</code>: coste estimado de la sesión.</li></ul>
+           <p class="note">Los límites solo llegan con plan Pro o Max. Por eso el script usa <code>?.</code>: si el campo no existe, no rompe.</p>`,
+    notes: "La segunda línea es la que más uso: sé cuándo vuelvo a tener límite sin salir de la terminal.",
+    beats: [
+      async () => {
+        await escribirPrompt("añade una segunda línea con el límite de 5 h, el semanal y el coste");
+        await enviar();
+        await pensar(1300);
+        await herramienta("Update", "~/.claude/statusline.js", "Updated with 6 additions and 1 removal", DIFF_LINEA2);
+      },
+      async () => { await status({ linea2: true }); await resaltar(["5h", "7d", "coste"]); },
+    ],
+  },
+  {
+    step: "07 · Probarla",
+    title: "Sin Claude Code, <em>con un JSON de ejemplo</em>",
+    body: `<p>Si la barra se queda en blanco, el script ha fallado. Para saber por qué, ejecútalo a mano con un JSON inventado.</p>
+           <p class="note">En Windows, escribe la ruta del <code>command</code> con <code>/</code>, no con <code>\\</code>. Si no, no sale nada y no da error.</p>`,
+    notes: "Este es el truco que más tiempo me ha ahorrado. Lo de las barras invertidas me costó un buen rato.",
+    beats: [async () => {
+      await escribirPrompt("pruébala con un JSON de ejemplo");
+      await enviar();
+      await pensar(900);
+      add("msg tool", `<span class="dot dot--ok">●</span><b>Bash</b><span class="arg">(echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":42}}' | node ~/.claude/statusline.js)</span>`);
+      await sleep(600);
+      add("result", `⎿  <b class="w">talks</b> <span class="g">|</span> <span class="ve">main</span> <span class="g">|</span> <span class="cy">Opus</span> <span class="g">| ctx:</span>${barra(42)}`);
+      await sleep(400);
+    }],
+  },
+  {
+    step: "Ahora os toca",
+    title: "Escribid <em>/statusline</em> hoy",
+    body: `<p>Un comando, una frase, y dejáis de trabajar a ciegas.</p>
+           <p class="note">Charla, diapositivas y enlaces:<br><code style="font-size:1.3rem">iatalks.pages.dev</code></p>
+           <p>Documentación: <code>code.claude.com/docs/en/statusline</code></p>
+           <p><b>¿Preguntas?</b></p>`,
+    notes: "Deja el prompt a medio escribir: es la invitación. Preguntas.",
+    beats: [async () => { await escribirPrompt("/statusline ", 90); }],
+  },
+];
+
+/* ============================================================
+   4. Navegación
+   ============================================================ */
+let escena = 0, paso = 0, ocupado = false;
+
+function pintarGuia() {
+  const s = SCENES[escena];
+  const c = $("guideContent");
+  c.innerHTML = `<div class="guide__step">${s.step}</div><h2>${s.title}</h2><div class="guide__body">${s.body}</div>`;
+  c.classList.remove("guide__enter"); void c.offsetWidth; c.classList.add("guide__enter");
+  $("notesText").textContent = s.notes;
+  $("dots").innerHTML = SCENES.map((_, i) => `<i class="${i === escena ? "on" : i < escena ? "done" : ""}"></i>`).join("");
+  history.replaceState(null, "", "#" + (escena + 1)); // no llena el historial
+}
+
+function pintarPista() {
+  const h = $("nextHint");
+  const fin = escena === SCENES.length - 1 && paso >= SCENES[escena].beats.length;
+  h.textContent = ocupado ? "● animando… (→ para terminar)" : fin ? "fin" : "→ siguiente";
+  h.classList.toggle("wait", ocupado);
+}
+
+async function ejecutar(beat) {
+  ocupado = true; pintarPista();
+  try { await beat(); }
+  catch (e) { if (e !== ABORT) throw e; }
+  finally { ocupado = false; pintarPista(); }
+}
+
+async function siguiente() {
+  if (ocupado) { adelantar(); return; }
+  if (paso >= SCENES[escena].beats.length) {
+    if (escena === SCENES.length - 1) return;
+    escena++; paso = 0; pintarGuia();
+  }
+  skipping = false;
+  await ejecutar(SCENES[escena].beats[paso++]);
+}
+
+// Reconstruye la terminal hasta el final de la escena `n`, sin animaciones
+async function irA(n) {
+  gen++;
+  pendientes.slice().forEach((f) => f());
+  transcript.innerHTML = ""; $("inputText").textContent = ""; st = null; pintarStatus();
+  skipping = true;
+  for (let i = 0; i <= n; i++) {
+    for (const beat of SCENES[i].beats) {
+      try { await beat(); } catch (e) { if (e !== ABORT) throw e; }
+    }
+  }
+  skipping = false;
+  escena = n; paso = SCENES[n].beats.length; ocupado = false;
+  pintarGuia(); pintarPista();
+}
+
+async function repetir() {
+  // Vuelve al final de la escena anterior y reproduce esta con animación
+  const n = escena;
+  if (n === 0) return;
+  await irA(n - 1);
+  escena = n; paso = 0; pintarGuia();
+  await siguiente();
 }
 
 document.addEventListener("keydown", (e) => {
-  if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); siguiente(); }
-  else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); anterior(); }
-  else if (e.key === "Home") mostrar(0);
-  else if (e.key === "End") mostrar(slides.length - 1, true);
-  else if (e.key.toLowerCase() === "n") notes.hidden = !notes.hidden;
-  else if (e.key.toLowerCase() === "f") {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else document.documentElement.requestFullscreen();
-  }
+  const k = e.key.toLowerCase();
+  if (["arrowright", "pagedown", " "].includes(k)) { e.preventDefault(); siguiente(); }
+  else if (["arrowleft", "pageup"].includes(k)) { e.preventDefault(); if (escena > 0) irA(escena - 1); }
+  else if (k === "home") irA(0);
+  else if (k === "end") irA(SCENES.length - 1);
+  else if (k === "r") repetir();
+  else if (k === "n") $("notes").hidden = !$("notes").hidden;
+  else if (k === "f") document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
 });
+document.querySelector(".main").addEventListener("click", () => siguiente());
 
-// Clic en la diapositiva = siguiente (útil con el ratón o un mando)
-document.getElementById("stage").addEventListener("click", (e) => {
-  if (!e.target.closest("a, .notes")) siguiente();
-});
+// Dentro del iframe de la página de la charla, el enlace "Volver" sobra
+if (window.self !== window.top) $("backLink").hidden = true;
 
-setInterval(pintarStatusline, 1000);
-mostrar(parseInt(location.hash.slice(1), 10) - 1 || 0);
+irA(Math.max(0, Math.min(SCENES.length - 1, (parseInt(location.hash.slice(1), 10) || 1) - 1)));
 </script>
 </body>
 </html>
