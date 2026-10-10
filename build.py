@@ -169,7 +169,7 @@ def build() -> None:
 
     # Cada página va en <ruta>/index.html para que la URL quede sin ".html".
     write("index.html", env.get_template("index.html").render(talks=talks, path="/"))
-    write("about/index.html", env.get_template("about.html").render(path="/about/"))
+    write("about/index.html", env.get_template("about.html").render(talks=talks, path="/about/"))
     for talk in talks:
         path = f"/charlas/{talk.slug}/"
         write(f"charlas/{talk.slug}/index.html",
