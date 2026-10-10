@@ -13,7 +13,13 @@
 <h2>Proyectos</h2>
 <ul>
   <li>
-    <strong>presentacionmcp</strong>: [PENDIENTE: descripción en una frase y enlace.]
+    {# Solo enlazamos la charla cuando está publicada (no draft), para no dejar un enlace roto #}
+    {% if "mcp-en-qa" in talks | map(attribute="slug") %}
+    <a href="/charlas/mcp-en-qa/"><strong>Cómo trabajo con MCP en QA</strong></a>:
+    {% else %}
+    <strong>Cómo trabajo con MCP en QA</strong>:
+    {% endif %}
+    charla sobre cómo conectar un asistente de IA a Jira, Confluence y Figma con MCP.
   </li>
 </ul>
 
