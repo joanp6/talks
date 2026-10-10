@@ -1,0 +1,21 @@
+# Web generada (la crea build.py)
+dist/
+
+# Entorno virtual de Python
+.venv/
+venv/
+
+# Caché de Python
+__pycache__/
+*.pyc
+
+# Variables de entorno locales
+.env
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+.idea/

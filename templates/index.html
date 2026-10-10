@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Charlas</h1>
+<p class="lead">{{ site.description }}</p>
+
+{% if talks %}
+<ul class="talk-list">
+  {% for talk in talks %}
+  <li class="talk-card">
+    <h2><a href="/charlas/{{ talk.slug }}/">{{ talk.data.title }}</a></h2>
+    <p class="meta">
+      {{ talk.data.event }}
+      · <time datetime="{{ talk.data.date.isoformat() }}">{{ talk.data.date | fecha }}</time>
+      {% if talk.data.city %}· {{ talk.data.city }}{% endif %}
+    </p>
+    {% if talk.data.tags %}
+    <ul class="tags" aria-label="Etiquetas">
+      {% for tag in talk.data.tags %}<li>{{ tag }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+    <a class="more" href="/charlas/{{ talk.slug }}/">Ver charla →</a>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">Todavía no hay charlas publicadas.</p>
+{% endif %}
+{% endblock %}
