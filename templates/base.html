@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  {% set full_title = page_title ~ " · " ~ site.title if page_title else site.title %}
+  {% set description = description or site.description %}
+  {% set canonical = site.url ~ path %}
+  <title>{{ full_title }}</title>
+  <meta name="description" content="{{ description }}">
+  <meta name="author" content="{{ site.author }}">
+  <link rel="canonical" href="{{ canonical }}">
+
+  <!-- Open Graph: cómo se ve el enlace al compartirlo en redes -->
+  <meta property="og:type" content="{{ og_type or 'website' }}">
+  <meta property="og:site_name" content="{{ site.title }}">
+  <meta property="og:title" content="{{ full_title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ canonical }}">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary">
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="alternate" type="application/rss+xml" title="{{ site.title }}" href="/rss.xml">
+  <link rel="sitemap" href="/sitemap.xml">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="site-title" href="/">{{ site.title }}</a>
+      <nav aria-label="Principal">
+        <a href="/">Charlas</a>
+        <a href="/about/">Sobre mí</a>
+        <a href="/rss.xml">RSS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>
+        © {{ site.year }} {{ site.author }}.
+        Contenido bajo <a href="https://creativecommons.org/licenses/by/4.0/deed.es" rel="license">CC BY 4.0</a>.
+        Código bajo licencia MIT.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

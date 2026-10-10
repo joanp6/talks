@@ -1,0 +1,285 @@
+/* Estilos de toda la web. Un único archivo, sin frameworks. */
+
+/* --- Colores y medidas (cámbialos aquí y se aplican en todas partes) --- */
+:root {
+  --bg: #fdfdfc;
+  --surface: #f3f3f0;
+  --text: #1d1d1b;
+  --muted: #5f5f5a;
+  --border: #dddcd6;
+  --accent: #1f5fbf;
+  --accent-text: #ffffff;
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+  --width: 46rem;
+  --radius: 8px;
+}
+
+/* Modo oscuro: se activa solo si el sistema del visitante está en oscuro */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161615;
+    --surface: #222220;
+    --text: #ececea;
+    --muted: #a5a59f;
+    --border: #3a3a37;
+    --accent: #7fb0ff;
+    --accent-text: #0f1a2c;
+  }
+}
+
+/* --- Base --- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 0.15em;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: clamp(1.75rem, 5vw, 2.4rem);
+  margin: 0 0 0.75rem;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 0.9em;
+  background: var(--surface);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+pre {
+  background: var(--surface);
+  padding: 1rem;
+  border-radius: var(--radius);
+  overflow-x: auto;
+}
+
+pre code {
+  background: none;
+  padding: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.container {
+  max-width: var(--width);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+main {
+  padding-top: 2.5rem;
+  padding-bottom: 3rem;
+}
+
+/* --- Cabecera y pie --- */
+.site-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.site-header .container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.site-title {
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.site-header nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.site-header nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-header nav a:hover {
+  color: var(--text);
+}
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.875rem;
+  padding: 1.5rem 0;
+}
+
+/* --- Listado de charlas --- */
+.lead {
+  color: var(--muted);
+  font-size: 1.125rem;
+  margin-top: 0;
+}
+
+.talk-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.talk-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.talk-card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.25rem;
+}
+
+.talk-card h2 a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.talk-card h2 a:hover {
+  color: var(--accent);
+}
+
+.meta {
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+.more {
+  font-weight: 600;
+}
+
+.empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.tags {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tags li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.05rem 0.65rem;
+  font-size: 0.8125rem;
+}
+
+/* --- Detalle de charla --- */
+.back {
+  margin: 0 0 1.5rem;
+}
+
+.talk-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem 1.5rem;
+  margin: 1.25rem 0;
+}
+
+.talk-meta dt {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.talk-meta dd {
+  margin: 0;
+}
+
+.summary {
+  font-size: 1.125rem;
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+}
+
+.slides,
+.resources {
+  margin-top: 2.5rem;
+}
+
+/* iframe 16:9 que se adapta al ancho */
+.embed {
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.embed iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.pdf-viewer {
+  width: 100%;
+  height: 70vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.button {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-text);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--radius);
+}
+
+.button:hover {
+  opacity: 0.9;
+}

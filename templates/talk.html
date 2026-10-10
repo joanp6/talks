@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% set t = talk.data %}
+{% set page_title = t.title %}
+{% set description = t.summary %}
+{% set og_type = "article" %}
+
+{% block content %}
+<article>
+  <p class="back"><a href="/">← Todas las charlas</a></p>
+
+  <h1 lang="{{ t.language }}">{{ t.title }}</h1>
+
+  <dl class="talk-meta">
+    <div>
+      <dt>Evento</dt>
+      <dd>{% if t.eventUrl %}<a href="{{ t.eventUrl }}">{{ t.event }}</a>{% else %}{{ t.event }}{% endif %}</dd>
+    </div>
+    <div>
+      <dt>Fecha</dt>
+      <dd><time datetime="{{ t.date.isoformat() }}">{{ t.date | fecha }}</time></dd>
+    </div>
+    {% if t.city %}
+    <div>
+      <dt>Ciudad</dt>
+      <dd>{{ t.city }}</dd>
+    </div>
+    {% endif %}
+    <div>
+      <dt>Idioma</dt>
+      <dd>{{ languages[t.language] }}</dd>
+    </div>
+  </dl>
+
+  {% if t.tags %}
+  <ul class="tags" aria-label="Etiquetas">
+    {% for tag in t.tags %}<li>{{ tag }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+
+  <p class="summary" lang="{{ t.language }}">{{ t.summary }}</p>
+
+  <div class="prose" lang="{{ t.language }}">
+    {{ talk.body_html | safe }}
+  </div>
+
+  {# Diapositivas: solo si hay embed o PDF #}
+  {% if t.slidesEmbed or t.slidesPdf %}
+  <section class="slides">
+    <h2>Diapositivas</h2>
+    {% if t.slidesEmbed %}
+    <div class="embed">
+      <iframe src="{{ t.slidesEmbed }}" title="Diapositivas: {{ t.title }}" loading="lazy" allowfullscreen></iframe>
+    </div>
+    {% endif %}
+    {% if t.slidesPdf %}
+    <p><a class="button" href="{{ t.slidesPdf }}" download>Descargar PDF</a></p>
+      {# Sin embed, mostramos el PDF en un visor como alternativa #}
+      {% if not t.slidesEmbed %}
+      <object class="pdf-viewer" data="{{ t.slidesPdf }}" type="application/pdf">
+        <p>Tu navegador no puede mostrar el PDF. <a href="{{ t.slidesPdf }}">Descárgalo aquí</a>.</p>
+      </object>
+      {% endif %}
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if t.video or t.resources %}
+  <section class="resources">
+    <h2>Recursos</h2>
+    <ul>
+      {% if t.video %}<li><a href="{{ t.video }}">Vídeo de la charla</a></li>{% endif %}
+      {% for resource in t.resources %}
+      <li><a href="{{ resource.url }}">{{ resource.label }}</a></li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+</article>
+{% endblock %}

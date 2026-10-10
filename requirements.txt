@@ -1,0 +1,6 @@
+# Dependencias del generador (build.py). Versiones fijadas para que
+# el build en Cloudflare sea igual que en local.
+markdown==3.11      # Markdown -> HTML
+jinja2==3.1.6       # Plantillas HTML (carpeta templates/)
+pyyaml==6.0.3       # Lee el frontmatter (bloque --- del .md)
+pydantic==2.14.0    # Valida el frontmatter contra el esquema
