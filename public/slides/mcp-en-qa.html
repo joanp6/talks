@@ -48,6 +48,9 @@ body{background:#0a0a0a;color:var(--text);font-family:var(--sans);font-size:13px
   font-size:12px;color:var(--text);-webkit-app-region:no-drag;cursor:default;
 }
 .titlebar__menu__item:hover{background:var(--bg-hov)}
+/* Enlace para volver a la web de charlas (se oculta dentro del iframe) */
+.titlebar__back{margin-left:12px;padding:3px 10px;border-radius:4px;font-size:12px;color:#fff;background:#0e639c;text-decoration:none;white-space:nowrap;-webkit-app-region:no-drag}
+.titlebar__back:hover{background:#1177bb}
 .titlebar__search{
   justify-self:center;min-width:280px;max-width:480px;width:36vw;height:22px;
   background:#3c3c3c;border:1px solid var(--border);border-radius:4px;
@@ -1067,7 +1070,7 @@ body{background:#0a0a0a;color:var(--text);font-family:var(--sans);font-size:13px
     <span class="titlebar__menu__item">Terminal</span>
     <span class="titlebar__menu__item">Help</span>
   </nav>
-  <div></div>
+  <div><a class="titlebar__back" id="backLink" href="/charlas/mcp-en-qa/" target="_top">← Volver a la charla</a></div>
   <div class="titlebar__search">
     <div class="titlebar__search__nav">
       <button>‹</button><button>›</button>
@@ -2547,6 +2550,10 @@ function makeQR(seed){
 }
 const _qrEl=document.getElementById('qrEl');
 if(_qrEl) _qrEl.innerHTML=makeQR('mcp-en-qa');
+
+/* Dentro del iframe de la página de la charla ya estás en la charla:
+   el enlace "Volver" sobra. */
+if (window.self !== window.top) document.getElementById('backLink').hidden = true;
 
 /* ─────────────────── INIT ─────────────────── */
 window.addEventListener('load',()=>{
