@@ -1,5 +1,5 @@
 ---
-title: "La status line de Claude Code: tu panel de control en la terminal"
+title: "Activando la statusline bar en Claude Cli"
 event: "AI Lightning Talks with Claude · Quantiqus Meetup"
 eventUrl: "https://www.meetup.com/es-es/quantiqus-meetup-group/events/316867953/"
 date: 2026-10-15
@@ -8,8 +8,10 @@ language: es
 tags: ["Claude Code", "IA", "productividad", "terminal"]
 summary: "Cómo convertir la barra inferior de Claude Code en un panel con contexto, límites de uso, coste y rama de git, con un script de pocas líneas que recibe JSON por stdin."
 
-# slidesEmbed: "https://iatalks.pages.dev/slides/statuslinebar"
+slidesEmbed: "https://iatalks.pages.dev/slides/statuslinebar"
 resources:
+  - label: "Presentación a pantalla completa"
+    url: "https://iatalks.pages.dev/slides/statuslinebar"
   - label: "Documentación oficial: Customize your status line"
     url: "https://code.claude.com/docs/en/statusline"
   - label: "ccstatusline (proyecto de la comunidad)"
