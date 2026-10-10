@@ -1,6 +1,4 @@
 ---
-# Versión genérica de una sesión interna. Antes de poner draft: false,
-# confirma que tienes permiso para publicarla.
 
 title: "Cómo trabajo con MCP en QA"
 event: "Sesión interna de formación"
@@ -13,7 +11,7 @@ resources:
   - label: "Model Context Protocol: documentación oficial"
     url: "https://modelcontextprotocol.io"
 
-draft: true
+draft: false
 ---
 
 ## El problema: una IA sin contexto
