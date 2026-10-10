@@ -27,7 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl, ValidationError
 # --- Configuración del sitio -------------------------------------------------
 # Cambia SITE_URL cuando tengas el dominio definitivo (sin "/" al final).
 # Se usa en el sitemap, el RSS y las URLs canónicas / Open Graph.
-SITE_URL = "https://talks.pages.dev"
+SITE_URL = "https://iatalks.pages.dev"
 SITE_TITLE = "Charlas de Joan Pérez"
 SITE_DESCRIPTION = "Charlas que he dado en eventos: temas, diapositivas y recursos."
 AUTHOR = "Joan Pérez"

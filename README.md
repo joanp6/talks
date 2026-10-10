@@ -133,7 +133,7 @@ Solo hay que hacerlo una vez. Después, cada push a `main` se publica solo.
 
    La versión de Python la fija el archivo `.python-version` (3.13), así que no
    hace falta añadir variables de entorno.
-3. Pulsa **Save and Deploy**. La web quedará en `https://<proyecto>.pages.dev`.
+3. Pulsa **Save and Deploy**. La web quedará en `https://<proyecto>.pages.dev` (la actual es <https://iatalks.pages.dev>).
 4. Cuando sepas la URL definitiva, cámbiala en `SITE_URL`, arriba del todo de
    `build.py`. Se usa en el sitemap, el RSS y las etiquetas Open Graph.
 
