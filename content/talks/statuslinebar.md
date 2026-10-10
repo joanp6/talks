@@ -1,12 +1,9 @@
 ---
-# Charla en preparación. Cambia draft a false cuando quieras publicarla.
-# Los valores marcados con PENDIENTE son placeholders.
-
 title: "La status line de Claude Code: tu panel de control en la terminal"
-event: "PENDIENTE: nombre del evento"
-# eventUrl: "https://..."
-date: 2026-10-17                              # PENDIENTE: fecha real
-# city: "PENDIENTE"
+event: "AI Lightning Talks with Claude · Quantiqus Meetup"
+eventUrl: "https://www.meetup.com/es-es/quantiqus-meetup-group/events/316867953/"
+date: 2026-10-15
+city: "Sant Cugat del Vallès"
 language: es
 tags: ["Claude Code", "IA", "productividad", "terminal"]
 summary: "Cómo convertir la barra inferior de Claude Code en un panel con contexto, límites de uso, coste y rama de git, con un script de pocas líneas que recibe JSON por stdin."
@@ -18,7 +15,7 @@ resources:
   - label: "ccstatusline (proyecto de la comunidad)"
     url: "https://github.com/sirmalloc/ccstatusline"
 
-draft: true
+draft: false
 ---
 
 ## De qué va
