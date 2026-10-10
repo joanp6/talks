@@ -26,7 +26,7 @@ public/ (CSS, PDFs) ──┘
 | `build.py` | El generador. Arriba del todo está `SITE_URL` y el título del sitio. |
 | `check_size.py` | Comprueba que ningún archivo supera 25 MiB. |
 | `content/talks/` | Una charla = un archivo `.md`. |
-| `templates/` | HTML de cada página (`index`, `talk`, `about`) + `rss.xml` y `sitemap.xml`. |
+| `templates/` | HTML de cada página (`index`, `talk`, `about`, `404`) + `rss.xml` y `sitemap.xml`. |
 | `public/` | Archivos que se copian sin cambios: `style.css`, `favicon.svg`, `slides/*.pdf`. |
 | `dist/` | La web generada. No se sube a Git: la genera Cloudflare en cada deploy. |
 

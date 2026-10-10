@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% set page_title = "Página no encontrada" %}
+{% set description = "Esta página no existe." %}
+{% set noindex = true %}
+
+{% block content %}
+<h1>Página no encontrada</h1>
+<p class="lead">La página que buscas no existe o ha cambiado de dirección.</p>
+<p><a class="button" href="/">Ver todas las charlas</a></p>
+{% endblock %}
