@@ -8,7 +8,6 @@ language: es
 tags: ["Claude Code", "IA", "productividad", "terminal"]
 summary: "Cómo convertir la barra inferior de Claude Code en un panel con contexto, límites de uso, coste y rama de git, con un script de pocas líneas que recibe JSON por stdin."
 
-slidesEmbed: "https://iatalks.pages.dev/slides/statuslinebar"
 resources:
   - label: "Presentación a pantalla completa"
     url: "https://iatalks.pages.dev/slides/statuslinebar"
