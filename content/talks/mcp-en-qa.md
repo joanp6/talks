@@ -7,8 +7,6 @@ language: es
 tags: ["MCP", "IA", "QA"]
 summary: "Diez minutos sobre cómo conectar un asistente de IA a Jira, Confluence y Figma con MCP, y qué cambia en el día a día de QA cuando el modelo tiene contexto real."
 
-slidesEmbed: "https://iatalks.pages.dev/slides/mcp-en-qa"
-
 resources:
   - label: "Presentación a pantalla completa"
     url: "https://iatalks.pages.dev/slides/mcp-en-qa"
