@@ -27,7 +27,7 @@ public/ (CSS, PDFs) ──┘
 | `check_size.py` | Comprueba que ningún archivo supera 25 MiB. |
 | `content/talks/` | Una charla = un archivo `.md`. |
 | `templates/` | HTML de cada página (`index`, `talk`, `about`, `404`) + `rss.xml` y `sitemap.xml`. |
-| `public/` | Archivos que se copian sin cambios: `style.css`, `favicon.svg`, `slides/*.pdf`. |
+| `public/` | Archivos que se copian sin cambios: `style.css`, `favicon.svg`, `slides/*.pdf` y `slides/*.html`. |
 | `dist/` | La web generada. No se sube a Git: la genera Cloudflare en cada deploy. |
 
 ## Arrancar en local
@@ -105,6 +105,50 @@ Cómo se muestran las diapositivas:
 - Con `slidesPdf`: aparece un botón de descarga. Si además no hay
   `slidesEmbed`, el PDF también se muestra en un visor.
 - Sin ninguno de los dos: no aparece la sección.
+
+## Subir una presentación HTML
+
+Las presentaciones en HTML (como las de `mcp-en-qa` y `statuslinebar`) son
+**un único archivo** con el HTML, el CSS y el JavaScript dentro. No necesitan
+nada más en el servidor.
+
+1. **Revisa el contenido.** Todo lo que hay en `public/` se publica **aunque
+   la charla tenga `draft: true`**, porque `build.py` copia la carpeta entera.
+   Si la charla todavía no es pública, deja la presentación fuera del repo
+   hasta publicarla. Comprueba también que no lleva datos internos del trabajo
+   (nombres de clientes, tickets, URLs internas).
+2. **Cópiala** a `public/slides/<slug>.html`, con el mismo nombre que el `.md`
+   de la charla. Por ejemplo, `public/slides/mi-charla.html`.
+3. **Enlázala** desde la cabecera de la charla, en `resources`:
+
+   ```yaml
+   resources:
+     - label: "Presentación a pantalla completa"
+       url: "https://iatalks.pages.dev/slides/mi-charla"
+   ```
+
+   Pon la URL **sin `.html`**. Cloudflare Pages quita la extensión y, si la
+   pones, redirige (código 308) a la versión sin ella.
+4. **(Opcional) Incrústala** en la página con
+   `slidesEmbed: "https://iatalks.pages.dev/slides/mi-charla"`. Ojo: dentro
+   del iframe las flechas del teclado solo funcionan después de hacer clic en
+   la presentación. Por eso las charlas actuales solo la enlazan.
+5. **Comprueba y publica** como cualquier otra charla: `python build.py`,
+   `python check_size.py`, commit y push.
+
+Para que la presentación tenga un botón de vuelta a la web, las actuales
+llevan este enlace en la barra superior:
+
+```html
+<a id="backLink" href="/charlas/mi-charla/" target="_top">← Volver a la charla</a>
+<script>
+  // Dentro de un iframe ya estás en la charla: el enlace sobra.
+  if (window.self !== window.top) document.getElementById("backLink").hidden = true;
+</script>
+```
+
+`target="_top"` hace que, si se pulsa desde un iframe, se abra en la ventana
+entera y no dentro del recuadro.
 
 ## Límite de 25 MiB por archivo
 
