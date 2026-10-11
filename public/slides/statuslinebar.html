@@ -85,6 +85,7 @@ html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
 @keyframes flash { 0% { background: rgba(86,156,214,.35); } 100% { background: transparent; } }
 #statusline.nueva { animation: aparece .8s ease; }
 @keyframes aparece { from { opacity: 0; transform: translateY(.5rem); } to { opacity: 1; transform: none; } }
+.alerta { background: var(--red); color: #fff; font-weight: 700; padding: 0 .35rem; border-radius: .15rem; }
 .seg { border-radius: .2rem; transition: box-shadow .25s, background .25s; }
 .seg.hl { background: rgba(86,156,214,.25); box-shadow: 0 0 0 2px var(--blue); }
 
@@ -285,12 +286,21 @@ function pintarStatus(efecto) {
   const el = $("statusline");
   $("hint").hidden = !!st; // con status line, Claude Code oculta casi todos los atajos
   if (!st) { el.innerHTML = ""; return; }
-  const l1 = [
+  const rama = st.rama || "main";
+  const partes = [];
+  if (st.aviso && rama === "main") partes.push(seg("aviso", `<span class="alerta">⚠ MAIN</span>`));
+  partes.push(
     seg("carpeta", `<b class="w">talks</b>`),
-    seg("rama", `<span class="ve">main</span>`),
+    seg("rama", `<span class="ve">${rama}</span>`),
     seg("modelo", `<span class="cy">Opus</span>`),
     seg("ctx", `<span class="g">ctx:</span>${barra(st.ctx)}`),
-  ].join(SEP);
+  );
+  if (st.tests) {
+    partes.push(seg("tests", st.tests.fallos
+      ? `<span class="g">tests:</span><span class="ro">✖ ${st.tests.fallos}/${st.tests.total}</span>`
+      : `<span class="g">tests:</span><span class="ve">✔ ${st.tests.total}</span>`));
+  }
+  const l1 = partes.join(SEP);
   let html = l1;
   if (st.linea2) {
     html += "\n" + [
@@ -358,6 +368,24 @@ const DIFF_LINEA2 = [
   ["add", 36, "  ].filter(Boolean);"],
   ["del", 37, "  process.stdout.write(linea1);"],
   ["add", 37, '  process.stdout.write(linea1 + "\\n" + linea2.join(SEP));'],
+];
+
+const DIFF_TESTS = [
+  ["add", 44, "// Último informe JUnit (pytest, Jest, dotnet test, Maven…)"],
+  ["add", 45, "function resultadoTests(dir) {"],
+  ["add", 46, '  const xml = fs.readFileSync(path.join(dir, "reports/junit.xml"), "utf8");'],
+  ["add", 47, '  const total = Number(/tests="(\\d+)"/.exec(xml)?.[1] ?? 0);'],
+  ["add", 48, '  const fallos = Number(/failures="(\\d+)"/.exec(xml)?.[1] ?? 0);'],
+  ["add", 49, "  return fallos ? `✖ ${fallos}/${total}` : `✔ ${total}`;"],
+  ["add", 50, "}"],
+];
+
+const DIFF_MAIN = [
+  ["add", 12, 'const RAMAS_PROTEGIDAS = ["main", "master"];'],
+  [null, 58, "  const partes = [];"],
+  ["add", 59, "  if (RAMAS_PROTEGIDAS.includes(rama)) {"],
+  ["add", 60, "    partes.push(`${FONDO_ROJO} ⚠ ${rama.toUpperCase()} ${RESET}`);"],
+  ["add", 61, "  }"],
 ];
 
 const SCENES = [
@@ -482,7 +510,57 @@ const SCENES = [
     ],
   },
   {
-    step: "07 · Probarla",
+    step: "07 · Para QA",
+    title: "El estado de <em>los tests</em>, siempre a la vista",
+    body: `<p>El script no solo lee el JSON: también puede <b>leer archivos</b> y ejecutar comandos.</p>
+           <p>Le pido que lea el último informe <code>junit.xml</code>, el formato estándar que generan pytest, Jest, dotnet test, Maven…</p>
+           <ul><li><span class="ro">✖ 3/142</span>: hay fallos</li><li><span class="ve">✔ 142</span>: todo en verde</li></ul>
+           <p class="note">Leer un archivo es instantáneo. Lo que <b>no</b> hay que hacer es lanzar los tests desde el script: se ejecuta en cada mensaje.</p>`,
+    notes: "Esta es la idea para QA: no tengo que ir a buscar el informe, lo veo en la barra. Primero en rojo; le pido que los arregle y, al terminar, la barra se pone en verde sola.",
+    beats: [
+      async () => {
+        await escribirPrompt("añade el resultado de los tests leyendo reports/junit.xml");
+        await enviar();
+        await pensar(1200);
+        await herramienta("Update", "~/.claude/statusline.js", "Updated with 7 additions", DIFF_TESTS);
+        await status({ tests: { total: 142, fallos: 3 } });
+      },
+      async () => {
+        await escribirPrompt("arregla los 3 tests que fallan");
+        await enviar();
+        await pensar(1300);
+        await herramienta("Update", "src/pagos/iva.ts", "Updated with 4 additions and 2 removals");
+        await herramienta("Bash", "npm test", "Tests: 142 passed, 142 total");
+        await status({ tests: { total: 142, fallos: 0 } });
+      },
+    ],
+  },
+  {
+    step: "08 · Semáforo",
+    title: "Que la barra <em>te avise</em>",
+    body: `<p>Un error clásico: hacer cambios directamente en <code>main</code>. Le pido a la barra que me avise en rojo.</p>
+           <p>Y con la configuración del <b>proyecto</b> (<code>.claude/settings.json</code> dentro del repo), cada proyecto puede tener su propia barra: por ejemplo, un <b>⚠ PROD</b> en una carpeta delicada.</p>
+           <p class="note">No es más información: es <b>evitar errores</b> antes de cometerlos.</p>`,
+    notes: "Aviso en rojo nada más pedirlo, porque estoy en main. Creo una rama y el aviso desaparece. Para QA esto es oro: no lanzar nada contra el entorno equivocado.",
+    beats: [
+      async () => {
+        await escribirPrompt("si estoy en main o master, pon un aviso en rojo al principio");
+        await enviar();
+        await pensar(1100);
+        await herramienta("Update", "~/.claude/statusline.js", "Updated with 4 additions", DIFF_MAIN);
+        await status({ aviso: true });
+      },
+      async () => {
+        await escribirPrompt("crea una rama para el arreglo del IVA");
+        await enviar();
+        await pensar(800);
+        await herramienta("Bash", "git switch -c fix/iva", "Switched to a new branch 'fix/iva'");
+        await status({ rama: "fix/iva" });
+      },
+    ],
+  },
+  {
+    step: "09 · Probarla",
     title: "Sin Claude Code, <em>con un JSON de ejemplo</em>",
     body: `<p>Si la barra se queda en blanco, el script ha fallado. Para saber por qué, ejecútalo a mano con un JSON inventado.</p>
            <p class="note">En Windows, escribe la ruta del <code>command</code> con <code>/</code>, no con <code>\\</code>. Si no, no sale nada y no da error.</p>`,
@@ -493,7 +571,7 @@ const SCENES = [
       await pensar(900);
       add("msg tool", `<span class="dot dot--ok">●</span><b>Bash</b><span class="arg">(echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":42}}' | node ~/.claude/statusline.js)</span>`);
       await sleep(600);
-      add("result", `⎿  <b class="w">talks</b> <span class="g">|</span> <span class="ve">main</span> <span class="g">|</span> <span class="cy">Opus</span> <span class="g">| ctx:</span>${barra(42)}`);
+      add("result", `⎿  <b class="w">talks</b> <span class="g">|</span> <span class="ve">fix/iva</span> <span class="g">|</span> <span class="cy">Opus</span> <span class="g">| ctx:</span>${barra(42)} <span class="g">| tests:</span><span class="ve">✔ 142</span>`);
       await sleep(400);
     }],
   },
