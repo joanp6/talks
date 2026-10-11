@@ -1,584 +1,2566 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cómo trabajo con MCP en QA · Joan</title>
-<!--
-  Presentación animada de un solo archivo (sin dependencias).
-  A la izquierda, una terminal de Claude Code donde se escriben los prompts y Claude usa
-  los servidores MCP. A la derecha, la guía que explica cada paso.
-  Todos los datos (Tienda Demo, DEMO-123, reglas de devoluciones…) son ficticios.
-
-  Teclas: → / espacio / clic = siguiente paso (si hay una animación en marcha, la termina)
-          ← = escena anterior · R = repetir escena · N = notas · F = pantalla completa
--->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mcp-en-qa — Visual Studio Code (v7.4)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,400&family=IBM+Plex+Mono:wght@300;400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #1e1e1e; --term: #141414; --panel: #252526; --border: #3c3c3c;
-  --text: #d4d4d4; --muted: #8b8b8b; --dim: #5a5a5a;
-  --claude: #d97757; --blue: #569cd6; --cyan: #4ec9b0; --ok: #3fb950;
-  --yellow: #d7ba7d; --red: #f14c4c; --magenta: #c586c0;
-  --add-bg: rgba(63, 185, 80, .14);
-  --mono: "Cascadia Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
-  --ui: "Segoe UI", system-ui, sans-serif;
+:root{
+  --bg:#1f1f1f; --bg-panel:#181818; --bg-tb:#181818;
+  --bg-tab-a:#1f1f1f; --bg-tab-i:#181818;
+  --bg-hov:#2a2d2e; --bg-sel:#04395e;
+  --border:#2b2b2b; --border-s:#3c3c3c;
+  --text:#cccccc; --text-s:#ffffff; --text-m:#9d9d9d; --text-d:#6e6e6e;
+  --accent:#0078d4; --accent-s:rgba(0,120,212,0.12); --accent-g:rgba(0,120,212,0.35);
+  --green:#73c991; --red:#f48771; --yellow:#dcdcaa; --close-red:#c42b1c;
+  --syn-k:#9cdcfe; --syn-s:#ce9178; --syn-c:#6a9955; --syn-kw:#c586c0;
+  --syn-n:#b5cea8; --syn-t:#4ec9b0; --syn-f:#dcdcaa; --syn-p:#cccccc;
+  --icn-md:#519aba; --icn-json:#cbcb41; --icn-feat:#00a651;
+  --icn-chat:#c586c0; --icn-log:#999; --icn-sh:#4ec9b0; --icn-fold:#dcb67a;
+  --serif:'Fraunces',Georgia,serif;
+  --sans:'Segoe UI','IBM Plex Sans',system-ui,sans-serif;
+  --mono:'Cascadia Code','Consolas','IBM Plex Mono',monospace;
+  --c-text:#ebe7df; --c-muted:#9d9893; --c-dim:#5a5853;
+  --chat-w:340px;
 }
-* { box-sizing: border-box; }
-/* Todo escala con la ventana (proyector, portátil o iframe de la web) */
-html { font-size: min(1.05vw, 1.87vh); }
-html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--ui); overflow: hidden; }
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:#0a0a0a;color:var(--text);font-family:var(--sans);font-size:13px;-webkit-font-smoothing:antialiased}
 
-.app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+/* ── IDE shell ── */
+.ide{position:fixed;inset:0;display:grid;grid-template-rows:30px 1fr 22px;background:var(--bg)}
 
-/* --- Barra superior estilo VS Code --- */
-.titlebar { display: flex; align-items: center; gap: 1rem; height: 2.4rem; padding: 0 1rem; background: #181818; border-bottom: 1px solid var(--border); font-size: .85rem; color: var(--muted); }
-.titlebar svg { width: 1.1rem; height: 1.1rem; }
-.titlebar__tabs { display: flex; gap: 1.5rem; font-family: var(--mono); font-size: .8rem; letter-spacing: .05em; }
-.titlebar__tabs span.on { color: var(--text); border-bottom: 1px solid var(--text); padding-bottom: .1rem; }
-.titlebar__title { flex: 1; text-align: center; }
-.titlebar kbd { font-family: var(--mono); font-size: .7rem; border: 1px solid var(--border); border-radius: 3px; padding: 0 .3rem; margin-left: .25rem; }
-.back { color: #fff; background: #0e639c; text-decoration: none; padding: .15rem .6rem; border-radius: 3px; }
-.back:hover { background: #1177bb; }
+/* ── Title bar ── */
+.titlebar{
+  background:var(--bg-tb);display:grid;
+  grid-template-columns:auto auto 1fr auto 1fr auto;
+  align-items:center;border-bottom:1px solid var(--border);
+  user-select:none;-webkit-app-region:drag;
+}
+.titlebar__logo{padding:0 8px 0 10px;display:flex;align-items:center;height:30px}
+.titlebar__logo svg{width:18px;height:18px;display:block}
+.titlebar__menu{display:flex;align-items:center;height:30px}
+.titlebar__menu__item{
+  padding:0 8px;height:100%;display:flex;align-items:center;
+  font-size:12px;color:var(--text);-webkit-app-region:no-drag;cursor:default;
+}
+.titlebar__menu__item:hover{background:var(--bg-hov)}
+/* Enlace para volver a la web de charlas (se oculta dentro del iframe) */
+.titlebar__back{margin-left:12px;padding:3px 10px;border-radius:4px;font-size:12px;color:#fff;background:#0e639c;text-decoration:none;white-space:nowrap;-webkit-app-region:no-drag}
+.titlebar__back:hover{background:#1177bb}
+.titlebar__search{
+  justify-self:center;min-width:280px;max-width:480px;width:36vw;height:22px;
+  background:#3c3c3c;border:1px solid var(--border);border-radius:4px;
+  display:flex;align-items:center;padding:0 8px;font-size:11.5px;
+  color:var(--text-m);gap:8px;-webkit-app-region:no-drag;
+}
+.titlebar__search__nav{display:flex;align-items:center;gap:2px;color:var(--text-m)}
+.titlebar__search__nav button{
+  background:none;border:none;color:inherit;width:18px;height:18px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:default;border-radius:3px;font-size:11px;
+}
+.titlebar__search__nav button:hover{background:var(--bg-hov);color:var(--text)}
+.titlebar__search__name{flex:1;text-align:center;color:#ccc}
+.titlebar__search__name b{color:var(--text-m);font-weight:400;margin-right:4px}
+.titlebar__controls{display:flex;align-items:stretch;height:30px;-webkit-app-region:no-drag}
+.titlebar__btn{width:46px;height:30px;background:none;border:none;color:var(--text);display:flex;align-items:center;justify-content:center;cursor:default}
+.titlebar__btn:hover{background:#3c3c3c}
+.titlebar__btn--close:hover{background:var(--close-red);color:#fff}
+.titlebar__btn svg{width:10px;height:10px}
 
-.main { display: grid; grid-template-columns: 1.7fr 1fr; min-height: 0; }
+/* ── Main grid ── */
+.main{display:grid;grid-template-columns:48px 248px 1fr;min-height:0}
 
-/* --- Terminal de Claude Code --- */
-.term { display: flex; flex-direction: column; min-height: 0; background: var(--term); border-right: 1px solid var(--border); font-family: var(--mono); font-size: 1rem; line-height: 1.55; }
-/* flex-end: lo nuevo entra por abajo y lo viejo desaparece por arriba, como en una terminal */
-.transcript { flex: 1; min-height: 0; overflow: hidden; padding: 1.2rem 1.6rem .6rem; display: flex; flex-direction: column; justify-content: flex-end; }
-.transcript > * { flex-shrink: 0; }
+/* ── Activity bar ── */
+.actbar{
+  background:var(--bg-panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:stretch;
+}
+.actbar__icon{
+  width:48px;height:48px;display:flex;align-items:center;justify-content:center;
+  color:var(--text-m);background:none;border:none;cursor:default;position:relative;
+}
+.actbar__icon svg{width:24px;height:24px}
+.actbar__icon:hover{color:var(--text-s)}
+.actbar__icon--active{color:var(--text-s)}
+.actbar__icon--active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--text-s)}
+.actbar__badge{
+  position:absolute;top:8px;right:8px;min-width:16px;height:16px;
+  background:var(--accent);color:#fff;border-radius:8px;
+  font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;
+  padding:0 4px;border:1px solid var(--bg-panel);
+}
+.actbar__spacer{flex:1}
+.actbar__chat-mark{
+  position:absolute;bottom:8px;right:8px;
+  width:7px;height:7px;border-radius:50%;
+  background:var(--green);box-shadow:0 0 4px rgba(115,201,145,.5);
+  border:1.5px solid var(--bg-panel);
+}
+.ide.no-chat .actbar__chat-mark{display:none}
 
-.welcome { border: 1px solid var(--claude); border-radius: .4rem; padding: .7rem 1.1rem; margin-bottom: 1.2rem; width: fit-content; white-space: pre-wrap; }
-.welcome b { color: var(--claude); }
-.welcome .muted { color: var(--muted); }
+/* ── Sidebar ── */
+.sidebar{
+  background:var(--bg-panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;min-width:0;overflow:hidden;
+}
+.sidebar__head{
+  padding:8px 20px 6px;font-size:11px;color:var(--text);
+  letter-spacing:.08em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.sidebar__proj{
+  padding:2px 8px 6px;font-size:11px;color:var(--text-s);font-weight:600;
+  display:flex;align-items:center;gap:4px;text-transform:uppercase;letter-spacing:.04em;
+}
+.sidebar__proj::before{
+  content:'';display:inline-block;width:0;height:0;
+  border-left:5px solid currentColor;
+  border-top:3.5px solid transparent;border-bottom:3.5px solid transparent;
+  transform:rotate(90deg);margin-right:2px;
+}
+.tree{font-family:var(--sans);font-size:13px;flex:1;overflow-y:auto;padding-bottom:8px}
+.tree::-webkit-scrollbar{width:10px}
+.tree::-webkit-scrollbar-thumb{background:#424242}
+.tree__folder{
+  padding:1px 8px;color:var(--text);cursor:default;
+  display:flex;align-items:center;gap:4px;font-size:13px;line-height:1.6;
+}
+.tree__folder__arrow{width:10px;color:var(--text-m);font-size:9px;display:inline-block;text-align:center}
+.tree__folder__arrow::before{content:'▾'}
+.tree__folder.is-closed .tree__folder__arrow::before{content:'▸'}
+.tree__folder__icon{width:16px;height:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--icn-fold)}
+.tree__folder__icon svg{width:14px;height:14px}
+.tree__file{
+  padding:1px 8px 1px 28px;color:var(--text);cursor:default;
+  display:flex;align-items:center;gap:6px;font-size:13px;line-height:1.7;
+}
+.tree__file:hover{background:var(--bg-hov)}
+.tree__file.is-active{background:var(--bg-sel);color:var(--text-s)}
+.fi{
+  width:18px;height:18px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:8.5px;font-weight:700;border-radius:2px;
+}
+.fi-md{background:var(--icn-md);color:#fff}
+.fi-json{background:var(--icn-json);color:#000;font-size:9px}
+.fi-feature{background:var(--icn-feat);color:#fff}
+.fi-chat{background:var(--icn-chat);color:#fff;font-size:10px}
+.fi-log{background:var(--icn-log);color:#000;font-size:9px}
+.fi-sh{background:var(--icn-sh);color:#000;font-size:8px}
 
-.msg { margin: .5rem 0; white-space: pre-wrap; }
-.msg-user { margin: .9rem 0 .5rem; padding: .25rem .7rem; background: #262626; color: var(--muted); white-space: pre-wrap; border-left: 2px solid var(--dim); }
-.msg-user .t { color: var(--text); }
-.msg-user.bash { border-left-color: var(--magenta); }
-.msg-user.bash .t { color: var(--magenta); }
-.dot { margin-right: .5rem; }
-.dot--w { color: var(--text); } .dot--ok { color: var(--ok); }
-.tool b { color: var(--text); }
-.tool .mcp { color: var(--muted); }
-.tool .arg { color: var(--muted); }
-.result { color: var(--muted); margin: 0 0 .4rem 1.1rem; white-space: pre-wrap; }
-.src { color: var(--cyan); }
+/* ── Sidebar view toggle (Explorer / Extensions) ── */
+.sidebar__view{display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+.sidebar__view.is-active{display:flex}
 
-.code { margin: .2rem 0 .4rem 1.1rem; border-left: 1px solid var(--border); padding-left: .8rem; font-size: .88rem; line-height: 1.5; }
-.code div { white-space: pre; }
-.code .ln { color: var(--dim); display: inline-block; width: 2.2rem; text-align: right; margin-right: .9rem; }
-.code .add { background: var(--add-bg); color: #b9e6c0; }
-.code .kw { color: var(--magenta); }
+/* Extensions view */
+.ext__head{
+  padding:8px 20px 6px;font-size:11px;color:var(--text);
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.ext__search{
+  margin:4px 12px 10px;padding:5px 9px;
+  background:var(--bg);border:1px solid var(--border-s);border-radius:3px;
+  font-family:var(--sans);font-size:12px;color:var(--text-d);
+  display:flex;align-items:center;gap:8px;
+}
+.ext__search::before{
+  content:'';width:13px;height:13px;flex-shrink:0;
+  background:no-repeat center / contain url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23858585' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><path d='m21 21-4.3-4.3'/></svg>");
+}
+.ext__section{
+  padding:8px 12px 4px 20px;
+  font-family:var(--sans);font-size:11px;color:var(--text);
+  letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+  display:flex;align-items:center;gap:6px;
+}
+.ext__section__arrow{
+  display:inline-block;width:0;height:0;
+  border-left:5px solid currentColor;
+  border-top:3.5px solid transparent;border-bottom:3.5px solid transparent;
+  transform:rotate(90deg);
+}
+.ext__section__count{margin-left:auto;color:var(--text-d);font-size:10px;font-weight:400}
+.ext__list{padding:4px 8px;display:flex;flex-direction:column;gap:6px;overflow-y:auto}
+.ext__list::-webkit-scrollbar{width:10px}
+.ext__list::-webkit-scrollbar-thumb{background:#424242}
 
-/* Panel de /mcp y aviso de permisos */
-.box { border: 1px solid var(--dim); border-radius: .4rem; padding: .6rem 1rem; margin: .5rem 0; width: fit-content; min-width: 60%; white-space: pre-wrap; }
-.box__title { color: var(--text); font-weight: 600; margin-bottom: .3rem; }
-.box--perm { border-color: var(--yellow); }
-.box--perm .box__title { color: var(--yellow); }
-.opt.sel { color: var(--blue); }
+.ext-card{
+  display:grid;grid-template-columns:42px 1fr auto;gap:10px;
+  padding:10px 8px;border-radius:4px;
+  background:transparent;cursor:default;
+  transition:background .12s;
+}
+.ext-card:hover{background:var(--bg-hov)}
+.ext-card__icon{
+  width:42px;height:42px;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--sans);font-weight:700;font-size:13px;color:#fff;
+  background:var(--bg);
+}
+.ext-card__icon--atlassian{
+  background:linear-gradient(180deg, #2684ff 0%, #0052cc 100%);
+}
+.ext-card__icon--atlassian svg{width:26px;height:26px}
+.ext-card__icon--figma{
+  background:#1e1e1e;border:1px solid var(--border-s);
+}
+.ext-card__icon--figma svg{width:24px;height:24px}
+.ext-card__body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ext-card__name{
+  font-family:var(--sans);font-size:13px;font-weight:600;color:var(--text-s);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.ext-card__desc{
+  font-family:var(--sans);font-size:11.5px;color:var(--text-m);line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.ext-card__pub{
+  font-family:var(--sans);font-size:11px;color:var(--text-d);margin-top:2px;
+}
+.ext-card__gear{
+  width:22px;height:22px;align-self:flex-start;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text-d);opacity:0;transition:opacity .15s;
+}
+.ext-card:hover .ext-card__gear{opacity:1}
+.ext-card__gear svg{width:14px;height:14px}
 
-.spinner { color: var(--claude); margin: .5rem 0; }
-.spinner .muted { color: var(--muted); }
+.ext__empty{
+  padding:20px;font-family:var(--mono);font-size:11px;color:var(--text-d);
+  text-align:center;line-height:1.7;
+}
 
-/* Caja de entrada */
-.input { margin: 0 1.6rem; padding: .55rem 1rem; border: 1px solid var(--dim); border-radius: .4rem; min-height: 2.6rem; white-space: pre-wrap; }
-.input::before { content: "> "; color: var(--text); }
-.input.bash { border-color: var(--magenta); }
-.input.bash::before { content: "! "; color: var(--magenta); }
-.cursor { display: inline-block; width: .55rem; height: 1.05rem; background: var(--text); vertical-align: text-bottom; animation: parpadeo 1s steps(1) infinite; }
-@keyframes parpadeo { 50% { opacity: 0; } }
-.footer { padding: .45rem 2.4rem .9rem; min-height: 2.4rem; color: var(--muted); white-space: pre; }
-.footer .mcp-on { color: var(--ok); }
+/* ── Editor ── */
+.editor{
+  display:grid;background:var(--bg);
+  grid-template-columns:1fr var(--chat-w);
+  min-width:0;min-height:0;position:relative;
+  transition:grid-template-columns .25s cubic-bezier(.4,0,.2,1);
+}
+.ide.no-chat .editor{grid-template-columns:1fr 0}
+.editor__col{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}
+.tabs{display:flex;background:var(--bg-tab-i);border-bottom:1px solid var(--border);min-height:35px;overflow-x:auto}
+.tabs::-webkit-scrollbar{height:3px}
+.tabs::-webkit-scrollbar-thumb{background:var(--accent)}
+.tab{
+  padding:0 12px;background:var(--bg-tab-i);color:var(--text-m);
+  font-size:13px;display:flex;align-items:center;gap:6px;
+  border-right:1px solid var(--border);cursor:default;flex-shrink:0;position:relative;
+}
+.tab.is-active{background:var(--bg-tab-a);color:var(--text-s)}
+.tab.is-active::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:var(--accent)}
+.ti{
+  width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:8.5px;font-weight:700;border-radius:2px;flex-shrink:0;
+}
+.ti-md{background:var(--icn-md);color:#fff}
+.ti-json{background:var(--icn-json);color:#000;font-size:9px}
+.ti-feature{background:var(--icn-feat);color:#fff}
+.ti-chat{background:var(--icn-chat);color:#fff;font-size:10px}
+.ti-log{background:var(--icn-log);color:#000;font-size:9px}
+.ti-sh{background:var(--icn-sh);color:#000;font-size:8px}
+.tab__close{
+  margin-left:4px;width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+  color:var(--text-m);font-size:14px;border-radius:3px;
+}
+.tab__close::after{content:'×'}
+.tab:not(.is-active) .tab__close{visibility:hidden}
+.tab:not(.is-active):hover .tab__close{visibility:visible}
 
-.g { color: var(--muted); } .ve { color: var(--ok); } .am { color: var(--yellow); } .ro { color: var(--red); }
+/* breadcrumb with source toggle */
+.breadcrumb{
+  padding:0 14px;font-size:12px;color:var(--text-m);
+  background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:4px;flex-shrink:0;min-height:22px;
+}
+.breadcrumb__sep::after{content:'›';font-size:14px;color:var(--text-d)}
+.breadcrumb__last{color:var(--text)}
+.breadcrumb__spacer{flex:1}
+.breadcrumb__srcbtn{
+  display:none;align-items:center;gap:4px;
+  padding:2px 8px;font-size:11px;font-family:var(--mono);
+  color:var(--text-m);background:none;border:1px solid var(--border-s);
+  border-radius:3px;cursor:default;
+}
+.breadcrumb__srcbtn:hover{background:var(--bg-hov);color:var(--text)}
+.breadcrumb__srcbtn.is-md{display:flex}
+.breadcrumb__srcbtn.is-source-on{border-color:var(--accent);color:var(--accent)}
 
-/* --- Panel de guía --- */
-.guide { display: flex; flex-direction: column; padding: 2rem 2.2rem 1.4rem; background: var(--panel); min-height: 0; }
-.guide__step { font-family: var(--mono); font-size: .85rem; letter-spacing: .14em; text-transform: uppercase; color: var(--claude); margin-bottom: .9rem; }
-.guide__step::before { content: "── "; color: var(--dim); }
-.guide h2 { font-size: 2.1rem; line-height: 1.15; margin: 0 0 1.1rem; font-weight: 600; }
-.guide h2 em { font-style: normal; color: var(--claude); }
-.guide__body { flex: 1; font-size: 1.15rem; line-height: 1.55; overflow: hidden; }
-.guide__body p { margin: 0 0 1rem; }
-.guide__body ul { margin: 0 0 1rem; padding-left: 1.2rem; }
-.guide__body li { margin-bottom: .45rem; }
-.guide__body code { font-family: var(--mono); font-size: .92em; color: var(--cyan); }
-.guide__body .note { border-left: 3px solid var(--claude); padding: .5rem .9rem; background: rgba(217,119,87,.08); font-size: 1.05rem; }
-.guide__body .quote { font-size: 1.45rem; line-height: 1.35; color: #fff; }
-.guide__body .quote em { font-style: normal; color: var(--claude); }
-.guide__enter { animation: entra .4s ease; }
-@keyframes entra { from { opacity: 0; transform: translateX(.8rem); } to { opacity: 1; transform: none; } }
+/* editor body */
+.body{flex:1;overflow-y:auto;position:relative}
+.body::-webkit-scrollbar{width:14px}
+.body::-webkit-scrollbar-thumb{background:#424242}
+.body::-webkit-scrollbar-thumb:hover{background:#525252}
 
-.hand { font-size: 4rem; line-height: 1; margin-bottom: 1rem; }
-.flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; gap: .4rem; margin: .3rem 0 1.2rem; text-align: center; font-size: .95rem; }
-.flow div { background: #1b1b1b; border: 1px solid var(--border); border-radius: .4rem; padding: .55rem .3rem; }
-.flow div.you { border-color: var(--claude); }
-.flow span { color: var(--claude); }
-.flow small { display: block; font-family: var(--mono); font-size: .75rem; color: var(--muted); }
-.caps { display: grid; gap: .6rem; font-size: 1rem; }
-.caps div { background: #1b1b1b; border: 1px solid var(--border); border-radius: .4rem; padding: .5rem .8rem; }
-.caps b { color: #fff; }
-.caps .si { color: var(--ok); } .caps .no { color: var(--red); }
-.checks { list-style: none; padding: 0 !important; }
-.checks li::before { content: "☐ "; color: var(--claude); }
+/* ── Status bar ── */
+.statusbar{
+  background:var(--bg-panel);border-top:1px solid var(--border);
+  display:flex;align-items:center;padding:0 0 0 12px;
+  font-size:12px;color:var(--text);user-select:none;
+}
+.sbi{
+  display:flex;align-items:center;gap:5px;
+  padding:0 8px;height:22px;cursor:default;
+}
+.sbi:hover{background:var(--bg-hov)}
+.sbi svg{width:14px;height:14px}
+.sbi--right{margin-left:auto}
+.sbi--right+.sbi--right{margin-left:0}
+.sbi__dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text)}
 
-.guide__foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; font-size: .8rem; color: var(--muted); }
-.dots { display: flex; gap: .4rem; }
-.dots i { width: .55rem; height: .55rem; border-radius: 50%; background: var(--dim); }
-.dots i.on { background: var(--claude); }
-.dots i.done { background: var(--muted); }
-.next-hint { font-family: var(--mono); }
-.next-hint.wait { color: var(--claude); }
+/* ── Panel (multi-tab) ── */
+/* panel tabs etc */
+.panel__tabs{
+  display:flex;align-items:center;padding:0;
+  background:var(--bg-panel);border-bottom:1px solid var(--border);
+  min-height:32px;flex-shrink:0;
+}
+.panel__tab{
+  padding:6px 16px;font-size:11px;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--text-m);border-bottom:1px solid transparent;cursor:default;
+}
+.panel__tab:hover{color:var(--text)}
+.panel__tab.is-active{color:var(--text-s);border-bottom-color:var(--accent)}
+.panel__close{margin-left:auto;font-size:11px;color:var(--text-m);padding:0 14px}
+.panel__close kbd{
+  display:inline-block;padding:1px 5px;
+  border:1px solid var(--border-s);border-radius:2px;
+  background:var(--bg);color:var(--text);font-family:var(--mono);font-size:9px;
+}
+.panel__body{flex:1;overflow-y:auto}
+.panel__section{display:none;padding:16px 22px;font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--c-text)}
+.panel__section.is-active{display:block}
 
-/* Notas del presentador (tecla N) */
-.notes { position: fixed; left: 1rem; top: 3.2rem; width: 34rem; background: #111; border: 1px solid var(--yellow); border-radius: .4rem; padding: .9rem 1.1rem; font-size: 1rem; line-height: 1.5; z-index: 5; }
-.notes b { display: block; font-family: var(--mono); font-size: .75rem; color: var(--yellow); letter-spacing: .1em; margin-bottom: .3rem; }
+/* notes */
+.panel__prompt{color:var(--accent);font-weight:500}
+.panel__path{color:var(--syn-k)}
+.panel__notes{
+  font-family:var(--serif);font-style:italic;
+  font-size:16px;line-height:1.55;color:var(--c-text);max-width:90ch;margin-top:10px;
+}
+.panel__notes em{color:var(--accent);font-style:normal;font-weight:500}
+
+/* output trace */
+.trace__line{color:var(--text-m);font-size:12px;margin-bottom:2px;opacity:0;transform:translateY(4px)}
+.trace__line.is-visible{opacity:1;transform:translateY(0);transition:opacity .3s,transform .3s}
+.trace__ts{color:var(--text-d);margin-right:6px}
+.trace__ok{color:var(--green)}
+.trace__call{color:var(--accent)}
+.trace__val{color:var(--syn-s)}
+.trace__info{color:var(--text-m)}
+.trace__empty{color:var(--text-d);font-size:11px}
+
+/* problems */
+.prob__item{
+  display:flex;align-items:flex-start;gap:10px;padding:6px 0;
+  border-bottom:1px solid var(--border);font-size:12px;
+}
+.prob__item:last-child{border-bottom:none}
+.prob__icon{font-size:13px;flex-shrink:0;margin-top:1px}
+.prob__msg{color:var(--text)}
+.prob__src{color:var(--text-d);font-size:11px;margin-top:2px}
+.prob__empty{color:var(--text-d);font-size:11px;padding:8px 0}
+
+/* git log */
+.git__row{
+  display:grid;grid-template-columns:72px 1fr 110px;gap:14px;
+  padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;
+}
+.git__row:last-child{border-bottom:none}
+.git__hash{color:var(--accent);font-family:var(--mono);font-size:11px}
+.git__msg{color:var(--text)}
+.git__meta{color:var(--text-d);font-size:11px;text-align:right}
+
+/* ── Source view ── */
+.source-view{
+  padding:24px;font-family:var(--mono);font-size:13.5px;
+  line-height:1.7;color:var(--text);white-space:pre;overflow-x:auto;
+}
+.src-h1{color:var(--syn-f)}
+.src-h2{color:var(--syn-f);opacity:.8}
+.src-bold{color:var(--syn-k)}
+.src-em{color:var(--syn-s)}
+.src-ul{color:var(--text-m)}
+.src-code{color:var(--syn-t)}
+.src-com{color:var(--syn-c);font-style:italic}
+
+/* ── File views ── */
+.file{display:none;min-height:100%}
+.file.is-current{display:block;animation:fileIn .22s ease-out}
+@keyframes fileIn{from{opacity:0}to{opacity:1}}
+.file .source-view{display:none}
+.file.src-mode > .source-view{display:block}
+.file.src-mode > :not(.source-view){display:none}
+
+/* ── Markdown preview ── */
+.md{padding:48px 8% 80px;max-width:1200px;margin:0 auto;color:var(--c-text);font-family:var(--sans);font-size:15px;line-height:1.7}
+.md h1{font-family:var(--serif);font-size:clamp(40px,5.5vw,72px);line-height:1.05;letter-spacing:-.025em;font-weight:500;margin:0 0 24px;color:var(--c-text)}
+.md h1 em{font-style:italic;color:var(--accent);font-weight:400}
+.md h2{font-family:var(--serif);font-size:clamp(24px,3vw,36px);font-weight:500;letter-spacing:-.015em;margin:32px 0 16px}
+.md h2 em{font-style:italic;color:var(--accent)}
+.md .eyebrow{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.18em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:12px}
+.md .eyebrow::before{content:'';width:24px;height:1px;background:var(--accent)}
+.md p{font-size:16px;line-height:1.65;color:var(--c-muted);margin-bottom:14px;max-width:64ch}
+.md p.lead{font-size:19px;color:var(--c-text)}
+.md strong{color:var(--c-text);font-weight:500}
+.md ul{list-style:none;padding:0;margin:18px 0}
+.md li{padding-left:24px;position:relative;margin-bottom:12px;color:var(--c-muted);font-size:15px;line-height:1.55;max-width:64ch}
+.md li::before{content:'';position:absolute;left:0;top:11px;width:12px;height:1px;background:var(--accent)}
+.md li strong{color:var(--c-text);font-weight:500}
+.md .footnote{font-family:var(--mono);font-size:11px;color:var(--c-dim);margin-top:18px}
+
+/* hero */
+.md--hero{padding:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:100%;position:relative;overflow:hidden}
+.hero__bg{position:absolute;inset:0;z-index:0;background:radial-gradient(ellipse 60% 50% at 20% 30%,rgba(0,120,212,.10),transparent 60%),radial-gradient(ellipse 50% 40% at 80% 70%,rgba(155,176,196,.06),transparent 60%);animation:meshShift 14s ease-in-out infinite alternate}
+@keyframes meshShift{0%{transform:scale(1) translate(0,0)}100%{transform:scale(1.15) translate(-3%,-2%)}}
+.md--hero > *{position:relative;z-index:1}
+.md--hero .eyebrow{justify-content:center;color:var(--c-muted);margin-bottom:44px}
+.md--hero .eyebrow::before,.md--hero .eyebrow::after{content:'';width:24px;height:1px;background:var(--accent)}
+.md--hero .number{font-family:var(--serif);font-size:clamp(60px,11vw,160px);line-height:.9;letter-spacing:-.04em;font-weight:500;color:var(--accent);text-shadow:0 0 32px var(--accent-g);margin-bottom:18px}
+.md--hero .title{font-family:var(--serif);font-size:clamp(28px,4.5vw,52px);line-height:1.1;letter-spacing:-.02em;font-weight:500;max-width:24ch;margin:0 auto 16px}
+.md--hero .title em{font-style:italic;color:var(--c-text)}
+.md--hero .sub{font-family:var(--serif);font-style:italic;font-size:clamp(15px,1.6vw,19px);color:var(--c-muted);max-width:46ch}
+.md--hero .meta{margin-top:56px;display:flex;gap:36px;flex-wrap:wrap;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--c-muted);letter-spacing:.08em}
+.md--hero .meta span{color:var(--c-text)}
+.md--hero .ticker{margin-top:20px;display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:11px;color:var(--c-dim)}
+.md--hero .ticker__rotor{display:inline-block;min-width:120px;text-align:left;color:var(--accent)}
+.md--hero .ticker__rotor span{display:none}
+.md--hero .ticker__rotor span.is-on{display:inline-block;animation:rotorIn .35s ease-out}
+@keyframes rotorIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* about */
+.md--about{padding:60px 8%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:100%;position:relative;overflow:hidden}
+.md--about > *{position:relative;z-index:2}
+.md--about .role{font-family:var(--mono);font-size:11px;color:var(--c-muted);letter-spacing:.18em;text-transform:uppercase;margin-bottom:36px}
+.md--about .role span{color:var(--accent)}
+.md--about .name{font-family:var(--serif);font-size:clamp(40px,6vw,76px);letter-spacing:-.025em;line-height:1;font-weight:500;margin-bottom:18px}
+.md--about .name em{font-style:italic;color:var(--accent)}
+.md--about .tags{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:780px}
+.md--about .tag{padding:7px 15px;border:1px solid var(--border-s);border-radius:99px;font-family:var(--mono);font-size:11.5px;color:var(--c-muted)}
+.md--about .tag--a{border-color:var(--accent);color:var(--accent);background:var(--accent-s)}
+.md--about .why{margin-top:48px;font-family:var(--serif);font-style:italic;font-size:clamp(15px,1.55vw,18px);color:var(--c-muted);max-width:54ch}
+
+/* about — connectors footer */
+.about-conn{
+  margin-top:64px;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;align-items:center;
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+}
+.about-conn__lbl{color:var(--c-dim)}
+.about-conn__chip{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 12px 6px 8px;border-radius:99px;
+  background:var(--bg-panel);border:1px solid var(--border);
+  color:var(--c-muted);
+}
+.about-conn__chip i{
+  width:18px;height:18px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;
+  font-style:normal;font-weight:700;font-size:9px;color:#fff;
+}
+.about-conn__chip i.jr{background:#0052cc}
+.about-conn__chip i.cf{background:#172b4d}
+.about-conn__chip i.fg{background:#1e1e1e;border:1px solid var(--border-s);color:#f24e1e}
+
+/* about — decorative jira-ish callouts in background */
+.about-orn{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.45}
+.about-orn__card{
+  position:absolute;border:1px solid var(--border);background:var(--bg-panel);
+  border-radius:6px;padding:10px 12px;
+  font-family:var(--mono);font-size:10px;color:var(--c-dim);
+  display:flex;flex-direction:column;gap:6px;
+  opacity:.55;
+}
+.about-orn__card::before{
+  content:'';display:block;width:34px;height:3px;background:var(--accent);border-radius:2px;opacity:.55;margin-bottom:2px;
+}
+.about-orn__card span{display:block;height:5px;background:var(--border-s);border-radius:2px}
+.about-orn__card span:nth-child(3){width:80%}
+.about-orn__card span:nth-child(4){width:60%}
+
+/* placement of the 4 decorative cards — tilted, just visible */
+.about-orn__c1{top:8%;left:5%;width:130px;transform:rotate(-6deg)}
+.about-orn__c2{top:12%;right:7%;width:150px;transform:rotate(5deg)}
+.about-orn__c3{bottom:14%;left:8%;width:120px;transform:rotate(7deg)}
+.about-orn__c4{bottom:10%;right:5%;width:140px;transform:rotate(-4deg)}
+.about-orn__line{
+  position:absolute;background:var(--accent);opacity:.18;height:1px;
+}
+.about-orn__line--1{top:24%;left:18%;right:18%}
+.about-orn__line--2{bottom:30%;left:22%;right:22%}
+
+@media(max-width:900px){
+  .about-orn__c1,.about-orn__c2,.about-orn__c3,.about-orn__c4{display:none}
+}
+
+/* poll */
+.md--poll{padding:60px 8%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:100%}
+.md--poll .hand{font-size:clamp(80px,12vw,150px);line-height:1;margin-bottom:28px;animation:wave 3s ease-in-out infinite;transform-origin:70% 70%}
+@keyframes wave{0%,60%,100%{transform:rotate(0)}70%{transform:rotate(-12deg)}80%{transform:rotate(8deg)}90%{transform:rotate(-4deg)}}
+.md--poll .eyebrow{justify-content:center;color:var(--accent);margin-bottom:28px}
+.md--poll .q{font-family:var(--serif);font-size:clamp(28px,4vw,48px);line-height:1.15;letter-spacing:-.02em;font-weight:500;max-width:22ch;margin:0 auto 22px;color:var(--c-text)}
+.md--poll .q em{font-style:italic;color:var(--accent)}
+.md--poll .q.q2{font-size:clamp(22px,3vw,36px);color:var(--c-muted)}
+.md--poll .note{margin-top:40px;font-family:var(--mono);font-size:11px;color:var(--c-dim);letter-spacing:.15em;text-transform:uppercase}
+
+/* log */
+.log{padding:40px 6%;font-family:var(--mono);font-size:14px;line-height:1.95;color:var(--text-m);max-width:1100px;margin:0 auto}
+.log__head{font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.log__line{white-space:pre-wrap}
+.log__line .tt{color:var(--text-d)}
+.log__line .ok{color:var(--green)}
+.log__line .wn{color:var(--yellow)}
+.log__line .ac{color:var(--accent)}
+.log__line .yo{color:var(--c-text)}
+.log__line .pr{color:var(--accent);font-weight:500}
+.log__cur{display:inline-block;width:8px;height:14px;background:var(--text-m);vertical-align:-2px;animation:cur 1s steps(2) infinite}
+@keyframes cur{50%{opacity:0}}
+.log__sum{margin-top:24px;padding-top:16px;border-top:1px dashed var(--border-s);color:var(--accent);font-size:13px}
+
+/* code */
+.code{padding:0;display:flex;min-height:100%;font-family:var(--mono);font-size:14px;line-height:1.7}
+.code__gutter{padding:24px 0 80px;width:60px;flex-shrink:0;text-align:right;color:var(--text-d);font-size:13px;user-select:none;background:var(--bg)}
+.code__gutter span{display:block;padding-right:14px}
+.code__content{flex:1;padding:24px 24px 80px;color:var(--text);min-width:0;overflow-x:auto}
+.code__content pre{font-family:var(--mono);font-size:14px;line-height:1.7;color:var(--text);white-space:pre}
+.code__split{width:340px;border-left:1px solid var(--border);background:var(--bg-panel);padding:24px 22px;font-family:var(--sans);font-size:13px;color:var(--c-muted);line-height:1.55;flex-shrink:0}
+.code__split h3{font-family:var(--mono);font-size:10.5px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:14px;font-weight:500}
+.code__split ul{list-style:none;padding:0;margin-top:10px}
+.code__split li{font-size:13px;color:var(--c-muted);padding-left:14px;position:relative;margin-bottom:10px;line-height:1.5}
+.code__split li::before{content:'';position:absolute;left:0;top:8px;width:6px;height:1px;background:var(--accent)}
+.code__split strong{color:var(--c-text);font-weight:500}
+.code__split .footnote{font-family:var(--mono);font-size:11px;color:var(--c-dim);margin-top:16px}
+.tk-k{color:var(--syn-k)}.tk-s{color:var(--syn-s)}.tk-c{color:var(--syn-c);font-style:italic}.tk-kw{color:var(--syn-kw)}.tk-n{color:var(--syn-n)}.tk-t{color:var(--syn-t)}.tk-f{color:var(--syn-f)}.tk-p{color:var(--syn-p)}
+
+/* chat view */
+.cv{padding:36px 6% 80px;max-width:1000px;margin:0 auto;font-family:var(--sans)}
+.cv__head{font-family:var(--mono);font-size:10.5px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:24px;display:flex;align-items:center;gap:12px}
+.cv__head::before{content:'';width:24px;height:1px;background:var(--accent)}
+.cv__title{font-family:var(--serif);font-size:clamp(24px,3vw,38px);font-weight:500;letter-spacing:-.015em;color:var(--c-text);margin-bottom:8px}
+.cv__title em{font-style:italic;color:var(--accent)}
+.cv__intro{font-size:14px;color:var(--c-muted);max-width:60ch;margin-bottom:28px;line-height:1.6}
+.cv__intro strong{color:var(--c-text);font-weight:500}
+.cm{margin-bottom:20px}
+.cm__lbl{font-family:var(--mono);font-size:10px;color:var(--text-d);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.cm__u{background:var(--bg-panel);border-left:2px solid var(--accent);padding:11px 16px;border-radius:0 6px 6px 0;font-size:14px;color:var(--c-text)}
+.cm__u--gray{border-left-color:var(--text-d)}
+.cm__u .lk{color:var(--accent);font-family:var(--mono);font-size:12px;background:var(--accent-s);padding:1px 6px;border-radius:3px}
+.cm__meta{display:flex;gap:14px;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--text-d);letter-spacing:.04em}
+.cm__meta span{color:var(--c-muted)}
+.cm__b{font-size:14px;color:var(--c-text);line-height:1.6;position:relative;min-height:24px;padding:8px 0}
+.cm__b__title{display:block;margin-bottom:8px}
+.cm__b__body{display:block;color:var(--c-muted);font-size:13.5px}
+.cm__b ul{list-style:none;padding:0;margin-top:10px}
+.cm__b li{padding-left:16px;position:relative;color:var(--c-muted);font-size:13px;margin-bottom:6px;line-height:1.5}
+.cm__b li::before{content:'·';position:absolute;left:4px;color:var(--accent)}
+.cm__b--muted{color:var(--c-muted)!important}
+.chat-src{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg-panel);border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:11px;color:var(--c-muted);margin-top:14px}
+.chat-src::before{content:'↗';color:var(--accent)}
+.typing-dots{display:inline-flex;gap:4px;padding:6px 0}
+.typing-dots span{width:6px;height:6px;border-radius:50%;background:var(--text-m);animation:td 1.2s ease-in-out infinite}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes td{0%,60%,100%{opacity:.2;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.sh{opacity:0}.ss{opacity:1;animation:si .4s ease-out forwards}
+@keyframes si{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* anti-demo comparison label */
+.demo-lbl{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:4px 12px;border-radius:99px;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+  margin-bottom:16px;
+}
+.demo-lbl--fail{background:rgba(244,135,113,.1);color:var(--red);border:1px solid rgba(244,135,113,.3)}
+.demo-lbl--win{background:rgba(115,201,145,.1);color:var(--green);border:1px solid rgba(115,201,145,.3)}
+
+/* arch diagram */
+.arch-d{margin-top:32px;padding:30px 24px;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;display:flex;flex-direction:column;gap:18px;align-items:center;font-family:var(--sans)}
+.arch-d__row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+.arch-d__box{background:var(--bg);border:1px solid var(--border-s);border-radius:4px;padding:14px 18px;text-align:center;min-width:140px}
+.arch-d__box--s{border-color:var(--accent);background:var(--accent-s);box-shadow:0 0 24px var(--accent-g)}
+.arch-d__label{font-family:var(--mono);font-size:10px;color:var(--text-d);letter-spacing:.12em;text-transform:uppercase;margin-bottom:6px}
+.arch-d__name{font-size:14px;color:var(--c-text);font-weight:500}
+.arch-d__sub{font-family:var(--mono);font-size:11px;color:var(--c-muted);margin-top:4px}
+.arch-d__arrow{font-family:var(--mono);color:var(--accent);font-size:18px}
+.arch-d__foot{margin-top:6px;padding-top:14px;border-top:1px dashed var(--border-s);width:100%;text-align:center;font-family:var(--mono);font-size:12px;color:var(--c-muted)}
+.arch-d__foot strong{color:var(--accent);font-weight:500}
+
+/* antifaq */
+.antifaq{margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:12px;font-family:var(--sans)}
+.af-no,.af-yes{padding:16px 22px;background:var(--bg-panel);border:1px solid var(--border);border-radius:0 4px 4px 0}
+.af-no{border-left:2px solid var(--red)}
+.af-yes{border-left:2px solid var(--green)}
+.af__lbl{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.af-no .af__lbl{color:var(--red)}
+.af-yes .af__lbl{color:var(--green)}
+.af__txt{font-size:14px;color:var(--c-muted);line-height:1.5}
+.af__txt strong{color:var(--c-text);font-weight:500}
+.af-no .af__txt{font-size:15px;color:var(--c-text);font-weight:500}
+
+/* capability matrix (s8) */
+.cap-grid{
+  margin-top:24px;display:grid;
+  grid-template-columns:repeat(3,1fr);gap:14px;
+  font-family:var(--sans);
+}
+.cap-col{display:flex;flex-direction:column;gap:10px}
+.cap-col__head{
+  display:flex;align-items:center;gap:8px;padding-bottom:8px;
+  border-bottom:1px solid var(--border);
+}
+.cap-col__icon{
+  width:22px;height:22px;border-radius:4px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:9.5px;font-weight:700;color:#fff;
+}
+.cap-col__icon--jira{background:#0052cc}
+.cap-col__icon--conf{background:#172b4d}
+.cap-col__icon--fig{background:#1e1e1e;border:1px solid var(--border-s)}
+.cap-col__icon--fig::after{content:'F';color:#f24e1e}
+.cap-col__name{font-size:14px;font-weight:500;color:var(--c-text);letter-spacing:.01em}
+.cap-col__name span{color:var(--c-muted);font-weight:400;font-size:12px;margin-left:4px}
+.cap-card{
+  padding:11px 14px;background:var(--bg-panel);
+  border:1px solid var(--border);border-radius:4px;
+  flex:1;display:flex;flex-direction:column;
+}
+.cap-card--yes{border-left:2px solid var(--green)}
+.cap-card--no{border-left:2px solid var(--red)}
+.cap-card__lbl{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;margin-bottom:8px;font-weight:500;
+}
+.cap-card--yes .cap-card__lbl{color:var(--green)}
+.cap-card--no .cap-card__lbl{color:var(--red)}
+.cap-card ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:5px}
+.cap-card li{
+  padding-left:12px;position:relative;font-size:12px;line-height:1.4;
+  color:var(--c-muted);
+}
+.cap-card li::before{
+  content:'';position:absolute;left:0;top:7px;width:6px;height:1px;
+}
+.cap-card--yes li::before{background:var(--green)}
+.cap-card--no  li::before{background:var(--red)}
+.cap-card li strong{color:var(--c-text);font-weight:500}
+.cap-card li em{font-style:normal;color:var(--text-d);font-size:11px}
+
+@media(max-width:1200px){
+  .cap-grid{grid-template-columns:1fr;gap:20px}
+  .cap-col{flex-direction:row;align-items:stretch}
+  .cap-col__head{flex-direction:column;border-bottom:none;border-right:1px solid var(--border);padding:8px 14px 8px 0;min-width:110px}
+  .cap-card{flex:1}
+}
+
+/* honest */
+.honest-g{margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:20px;font-family:var(--sans)}
+.hc{padding:28px;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px}
+.hc--ok{border-top:2px solid var(--green)}
+.hc--wn{border-top:2px solid var(--accent)}
+.hc__lbl{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;font-weight:500}
+.hc--ok .hc__lbl{color:var(--green)}.hc--wn .hc__lbl{color:var(--accent)}
+.hc__title{font-family:var(--serif);font-size:20px;font-weight:500;margin-bottom:18px;color:var(--c-text)}
+.hc ul{list-style:none;padding:0}
+.hc li{font-size:14px;color:var(--c-muted);line-height:1.55;margin-bottom:11px;padding-left:18px;position:relative}
+.hc li::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%}
+.hc--ok li::before{background:var(--green)}.hc--wn li::before{background:var(--accent)}
+.hc li strong{color:var(--c-text);font-weight:500}
+.honest-foot{text-align:center;margin-top:28px;font-family:var(--serif);font-style:italic;font-size:16px;color:var(--c-muted)}
+
+/* roadmap */
+.roadmap{margin-top:28px;border-top:1px solid var(--border)}
+.rm-row{display:grid;grid-template-columns:130px 50px 1fr;gap:22px;align-items:center;padding:16px 0;border-bottom:1px solid var(--border)}
+.rm-when{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;font-weight:500}
+.rm-num{font-family:var(--serif);font-size:28px;color:var(--text-d);font-weight:500;text-align:center;line-height:1}
+.rm-what{font-size:15px;color:var(--c-text);line-height:1.5}
+.rm-what em{display:block;font-style:italic;color:var(--c-muted);font-size:13px;font-family:var(--serif);margin-top:4px}
+
+/* recap */
+.recap{margin-top:32px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.rc{padding:32px 24px;background:var(--bg-panel);border:1px solid var(--border);border-radius:4px;transition:transform .3s,border-color .3s}
+.rc:hover{transform:translateY(-3px);border-color:var(--accent)}
+.rc__n{font-family:var(--mono);font-size:10.5px;color:var(--text-d);letter-spacing:.15em;margin-bottom:16px}
+.rc__v{font-family:var(--serif);font-size:clamp(28px,4vw,48px);font-weight:500;line-height:1;letter-spacing:-.025em;color:var(--accent);margin-bottom:16px}
+.rc__v em{font-style:italic}
+.rc__t{font-size:13.5px;color:var(--c-text);line-height:1.5;margin-bottom:12px}
+.rc__s{font-family:var(--mono);font-size:11px;color:var(--c-muted);letter-spacing:.04em}
+
+/* feature with inlay hints */
+.feature{padding:24px 24px 80px;font-family:var(--mono);font-size:14px;line-height:2;color:var(--text)}
+.feat-pipe{margin:0 0 28px 56px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--text-m)}
+.fp{padding:5px 10px;background:var(--bg-panel);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--sans)}
+.fp--a{border-color:var(--accent);color:var(--accent);background:var(--accent-s)}
+.fp-arr{color:var(--accent)}
+.fl{display:flex;align-items:center;gap:14px;position:relative;white-space:pre;min-height:28px}
+.fl__n{width:42px;text-align:right;color:var(--text-d);font-size:13px;flex-shrink:0;user-select:none}
+.fl__c{flex:0 0 auto}
+.fl__hint{
+  font-family:var(--sans);font-size:10.5px;color:var(--accent);
+  letter-spacing:.01em;padding:1px 7px;background:var(--accent-s);
+  border-radius:3px;white-space:nowrap;margin-left:14px;
+  border:1px dashed var(--accent);opacity:.9;
+}
+.fl__hint::before{content:'⌗ ';color:var(--accent);opacity:.6}
+.feat-metric{
+  margin:28px 0 0 56px;padding:14px 18px;background:var(--bg-panel);
+  border:1px solid var(--border);border-left:2px solid var(--accent);
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;font-family:var(--sans);
+}
+.feat-metric__n{font-family:var(--serif);font-size:32px;font-weight:500;color:var(--accent);line-height:1}
+.feat-metric__l{font-size:13px;color:var(--c-muted);line-height:1.45;flex:1;min-width:200px}
+.feat-metric__l strong{color:var(--c-text);font-weight:500}
+.feat-metric__note{font-family:var(--mono);font-size:9px;color:var(--c-dim);letter-spacing:.1em;text-transform:uppercase}
+
+/* ── Closing terminal (s16) ── */
+.cterm{padding:40px 6% 0;max-width:1100px;margin:0 auto}
+.cterm__win{background:#0a0a0a;border:1px solid var(--border);font-family:var(--mono);font-size:13.5px;line-height:2;border-radius:4px;overflow:hidden}
+.cterm__top{display:flex;align-items:center;gap:8px;padding:8px 14px;background:#1a1a1a;border-bottom:1px solid var(--border)}
+.cterm__dots{display:flex;gap:6px}
+.cterm__dots span{width:10px;height:10px;border-radius:50%;background:var(--border-s)}
+.cterm__ttl{color:var(--text-m);font-size:11px;letter-spacing:.04em}
+.cterm__body{padding:18px 22px}
+.cterm__line{color:var(--text-m);white-space:pre-wrap;display:block;opacity:0}
+.cterm__line.is-vis{opacity:1;animation:termIn .2s ease-out forwards}
+@keyframes termIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
+.ct-pr{color:var(--accent);font-weight:500}
+.ct-cmd{color:var(--c-text)}
+.ct-ok{color:var(--green)}
+.ct-wn{color:var(--yellow)}
+.ct-muted{color:var(--text-d)}
+.ct-link{color:var(--syn-k)}
+.ct-cur{display:inline-block;width:8px;height:14px;background:var(--text-m);vertical-align:-2px;animation:cur 1s steps(2) infinite}
+.cterm__thanks{
+  padding:40px 6% 80px;max-width:1100px;margin:0 auto;text-align:center;
+  opacity:0;transition:opacity .8s ease-out;
+}
+.cterm__thanks.is-vis{opacity:1}
+.cterm__thanks .quote{font-family:var(--serif);font-size:clamp(28px,4vw,52px);line-height:1.1;letter-spacing:-.025em;font-weight:400;max-width:26ch;margin:0 auto 14px;color:var(--c-text)}
+.cterm__thanks .quote em{font-style:italic;color:var(--accent);text-shadow:0 0 24px var(--accent-g)}
+.cterm__thanks .sub{font-family:var(--serif);font-style:italic;font-size:clamp(14px,1.4vw,17px);color:var(--c-muted);max-width:46ch;margin:0 auto}
+.cterm__cta{margin-top:28px;padding:20px 26px;border:1px solid var(--accent);border-radius:4px;background:var(--accent-s);display:inline-flex;align-items:center;gap:24px;text-align:left}
+.cterm__cta__qr{width:96px;height:96px;background:#fff;border-radius:4px;padding:6px;flex-shrink:0}
+.cterm__cta__qr svg{display:block;width:100%;height:100%}
+.cterm__cta__txt{max-width:280px}
+.cterm__cta__lbl{font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.cterm__cta__action{font-family:var(--serif);font-size:15px;color:var(--c-text);line-height:1.35;font-weight:500;margin-bottom:6px}
+.cterm__cta__note{font-family:var(--mono);font-size:10px;color:var(--c-muted)}
+.cterm__qa{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.cterm__qa__lbl{font-family:var(--mono);font-size:10.5px;color:var(--c-dim);letter-spacing:.2em;text-transform:uppercase}
+.cterm__qa__word{font-family:var(--serif);font-size:clamp(28px,3.5vw,44px);font-weight:400;color:var(--accent);font-style:italic;letter-spacing:-.02em}
+.cterm__seeds{margin-top:12px;display:flex;flex-direction:column;gap:4px;align-items:center}
+.cterm__seeds span{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--c-dim)}
+.cterm__seeds span::before{content:'· ';color:var(--accent)}
+.cterm__links{margin-top:24px;display:flex;gap:22px;flex-wrap:wrap;justify-content:center;font-family:var(--mono);font-size:10px;color:var(--c-muted)}
+.cterm__links span{color:var(--c-text)}
+
+/* ── Toast ── */
+.toast{position:fixed;top:44px;right:18px;z-index:200;padding:8px 14px;background:var(--bg-panel);border:1px solid var(--accent);font-size:12px;color:var(--text-s);opacity:0;transform:translateY(-8px);pointer-events:none;transition:opacity .3s,transform .3s;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.toast.is-on{opacity:1;transform:translateY(0)}
+
+/* ── Kbd hint ── */
+/* kbd hint removed */
+
+/* ═══ CHAT PANEL (right column) ═══ */
+.chatpanel{
+  background:var(--bg-panel);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  min-width:0;min-height:0;overflow:hidden;
+  padding-bottom:0;
+}
+.ide.no-chat .chatpanel{display:none}
+
+.cp__head{
+  display:flex;align-items:center;gap:10px;
+  padding:0 12px;height:35px;flex-shrink:0;
+  background:var(--bg-tb);border-bottom:1px solid var(--border);
+  font-family:var(--mono);font-size:11px;color:var(--text-m);
+}
+.cp__head__dot{
+  width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px rgba(115,201,145,.6);
+}
+.cp__head__title{color:var(--text-s);font-weight:500;letter-spacing:.14em;text-transform:uppercase}
+.cp__head__model{
+  margin-left:auto;padding:2px 8px;
+  background:var(--accent-s);color:var(--accent);
+  border-radius:99px;font-size:10px;letter-spacing:.02em;
+  border:1px solid var(--accent-g);
+}
+.cp__head__x{
+  width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+  color:var(--text-m);background:none;border:none;cursor:default;border-radius:3px;font-size:14px;
+}
+.cp__head__x:hover{background:var(--bg-hov);color:var(--text)}
+
+.cp__messages{
+  flex:1;overflow-y:auto;padding:16px 12px 8px;
+  display:flex;flex-direction:column;gap:14px;
+  scroll-behavior:smooth;
+}
+.cp__messages::-webkit-scrollbar{width:8px}
+.cp__messages::-webkit-scrollbar-thumb{background:#3a3a3a}
+.cp__messages::-webkit-scrollbar-thumb:hover{background:#525252}
+
+.cp__empty{
+  margin:auto;text-align:center;color:var(--text-d);
+  font-family:var(--mono);font-size:11px;
+  line-height:1.85;letter-spacing:.04em;
+  padding:0 18px;
+}
+.cp__empty__dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--text-d);margin:0 auto 14px;
+  animation:cpEmptyPulse 2.2s ease-in-out infinite;
+}
+@keyframes cpEmptyPulse{50%{opacity:.3;transform:scale(.9)}}
+
+.cp__msg{
+  display:flex;flex-direction:column;gap:5px;
+  opacity:0;transform:translateY(4px);
+  animation:cpIn .25s ease-out forwards;
+}
+@keyframes cpIn{to{opacity:1;transform:translateY(0)}}
+.cp__role{
+  font-family:var(--mono);font-size:9.5px;color:var(--text-d);
+  letter-spacing:.12em;text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+}
+.cp__role__dot{width:5px;height:5px;border-radius:50%}
+.cp__msg--u .cp__role__dot{background:var(--accent)}
+.cp__msg--c .cp__role__dot{background:var(--icn-chat)}
+.cp__role__meta{margin-left:auto;color:var(--text-d);font-size:9px;letter-spacing:.04em}
+
+.cp__bubble{
+  padding:9px 12px;border-radius:6px;
+  font-size:13px;line-height:1.5;color:var(--c-text);
+  background:var(--bg);border:1px solid var(--border);
+  word-wrap:break-word;
+}
+.cp__msg--u .cp__bubble{
+  background:rgba(0,120,212,.07);
+  border-color:var(--accent-g);
+  border-left:2px solid var(--accent);
+}
+.cp__bubble em{font-style:italic;color:var(--accent);font-weight:400}
+.cp__bubble strong{color:var(--text-s);font-weight:500}
+.cp__bubble code{
+  font-family:var(--mono);font-size:11.5px;
+  padding:1px 5px;border-radius:3px;
+  background:var(--bg-tb);color:var(--syn-k);
+}
+.cp__bubble ul{list-style:none;padding:0;margin:8px 0 0}
+.cp__bubble li{
+  padding-left:14px;position:relative;
+  font-size:12.5px;color:var(--text);margin-bottom:5px;line-height:1.5;
+}
+.cp__bubble li::before{
+  content:'';position:absolute;left:0;top:9px;
+  width:8px;height:1px;background:var(--accent);
+}
+.cp__bubble li strong{color:var(--text-s);font-weight:500}
+.cp__bubble .ok{color:var(--green)}
+.cp__bubble .wn{color:var(--yellow)}
+
+.cp__src{
+  margin-top:10px;display:inline-flex;align-items:center;gap:5px;
+  padding:3px 8px;background:var(--bg-tb);border:1px solid var(--border);
+  border-radius:3px;font-family:var(--mono);font-size:10px;
+  color:var(--text-m);max-width:100%;
+}
+.cp__src::before{content:'↗';color:var(--accent);font-size:11px}
+.cp__src__txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
+.cp__caret{
+  display:inline-block;width:7px;height:13px;
+  background:var(--accent);vertical-align:-2px;margin-left:1px;
+  animation:cur 1s steps(2) infinite;
+}
+
+.cp__dots{display:inline-flex;gap:4px;padding:4px 0}
+.cp__dots span{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--text-m);animation:td 1.2s ease-in-out infinite;
+}
+.cp__dots span:nth-child(2){animation-delay:.2s}
+.cp__dots span:nth-child(3){animation-delay:.4s}
+
+.cp__input{
+  padding:8px 12px 6px;border-top:1px solid var(--border);
+  background:var(--bg-panel);flex-shrink:0;
+}
+.cp__input__box{
+  background:var(--bg);border:1px solid var(--border-s);
+  border-radius:6px;padding:8px 10px;
+  font-size:12.5px;color:var(--text-d);
+  font-family:var(--sans);min-height:42px;
+  display:flex;align-items:flex-start;gap:8px;
+  transition:border-color .2s;
+}
+.cp__input__box:hover{border-color:var(--text-d)}
+.cp__input__placeholder{
+  flex:1;color:var(--text-d);line-height:1.4;
+  max-height:54px;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+}
+.cp__input__placeholder em{color:var(--text-m);font-style:normal}
+.cp__input__send{
+  width:24px;height:24px;flex-shrink:0;
+  background:var(--accent-s);color:var(--accent);
+  border-radius:4px;display:flex;align-items:center;justify-content:center;
+  font-size:13px;border:1px solid var(--accent-g);
+}
+.cp__hint{
+  margin-top:8px;font-family:var(--mono);font-size:9.5px;
+  color:var(--text-d);letter-spacing:.04em;text-align:center;
+  display:flex;justify-content:center;gap:10px;
+}
+.cp__hint kbd{
+  display:inline-block;padding:0 4px;
+  border:1px solid var(--border-s);border-radius:2px;
+  background:var(--bg);color:var(--text-m);
+  font-family:var(--mono);font-size:9px;margin:0 1px;
+}
+
+/* slide hidden while right-chat is streaming its prompt+reply for this file */
+.file.is-generating > *{
+  opacity:0;
+  transform:translateY(8px);
+  transition:none;
+}
+.file.is-revealed > *{
+  opacity:1;
+  transform:translateY(0);
+  transition:opacity .55s ease-out, transform .55s cubic-bezier(.4,0,.2,1);
+}
+.file.is-generating::after{
+  content:'// generando desde chat...';
+  position:absolute;
+  top:50%;left:0;right:0;
+  transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:10.5px;color:var(--text-d);
+  letter-spacing:.14em;text-transform:uppercase;
+  opacity:.55;
+  pointer-events:none;
+}
+.file{position:relative}
+
+/* ─────────────────── PRESENTER HUD (embedded in chat panel) ─────────────────── */
+/* cp__hud sits between cp__messages and cp__input — zero height when closed */
+.cp__hud{
+  flex-shrink:0;
+  overflow:hidden;
+  max-height:0;
+  border-top:0px solid var(--border);
+  transition:max-height .3s cubic-bezier(.4,0,.2,1), border-top-width 0s linear .3s;
+}
+.cp__hud.is-on{
+  max-height:280px;
+  border-top:1px solid var(--border);
+  transition:max-height .3s cubic-bezier(.4,0,.2,1), border-top-width 0s linear 0s;
+}
+.cp__hud__counter{
+  padding:10px 14px 8px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:baseline;gap:8px;
+}
+.cp__hud__num{
+  font-family:var(--mono);font-size:20px;font-weight:600;
+  color:var(--accent);letter-spacing:-.02em;line-height:1;
+}
+.cp__hud__total{
+  font-family:var(--mono);font-size:12px;color:var(--text-d);
+}
+.cp__hud__label{
+  margin-left:auto;font-family:var(--mono);font-size:10px;
+  color:var(--text-m);letter-spacing:.08em;text-transform:uppercase;
+  text-align:right;line-height:1.35;
+}
+.cp__hud__next{
+  padding:5px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+  font-family:var(--mono);font-size:10.5px;color:var(--text-d);
+}
+.cp__hud__arrow{color:var(--accent);opacity:.7;font-size:12px}
+.cp__hud__nextname{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+}
+.cp__hud__notes{
+  max-height:130px;overflow-y:auto;padding:8px 14px 10px;
+}
+.cp__hud__notes::-webkit-scrollbar{width:6px}
+.cp__hud__notes::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:3px}
+.cp__hud__noteslbl{
+  font-family:var(--mono);font-size:9px;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--text-d);margin-bottom:6px;
+}
+.cp__hud__notestxt{
+  font-family:var(--sans);font-size:12px;line-height:1.6;color:var(--text-m);
+}
+.cp__hud__notestxt em{font-style:italic;color:var(--text-s)}
+.cp__hud__notestxt strong{font-weight:500;color:var(--text-s)}
+
+/* Panel: no longer needs to make room for external HUD */
+.panel{
+  position:fixed;left:48px;right:var(--chat-w);bottom:62px;
+  background:var(--bg);border-top:1px solid var(--border-s);
+  z-index:80;max-height:38vh;
+  transform:translateY(calc(100% + 62px));
+  visibility:hidden;pointer-events:none;
+  transition:transform .35s cubic-bezier(.4,0,.2,1),right .25s cubic-bezier(.4,0,.2,1),visibility 0s linear .35s;
+  display:flex;flex-direction:column;
+}
+.panel:not(.is-on){display:none}
+.ide.no-chat .panel{right:0}
+.panel.is-on{
+  transform:translateY(0);
+  visibility:visible;pointer-events:auto;
+  transition:transform .35s cubic-bezier(.4,0,.2,1),right .25s cubic-bezier(.4,0,.2,1),visibility 0s linear 0s;
+}
+
+/* kbd-hint removed */
+
+@media(max-width:1100px){
+  :root{--chat-w:300px}
+  .cp__bubble{font-size:12.5px}
+  .cp__bubble li{font-size:12px}
+}
+@media(max-width:900px){
+  .main{grid-template-columns:0 0 1fr}
+  .actbar,.sidebar{display:none}
+  .panel{left:0;right:0!important}
+
+  .antifaq,.honest-g,.recap{grid-template-columns:1fr}
+  .code{flex-direction:column}
+  .code__split{width:auto;border-left:none;border-top:1px solid var(--border)}
+  .titlebar__menu{display:none}
+  .titlebar__search{min-width:0;width:140px}
+  .editor{grid-template-columns:1fr!important}
+  .chatpanel{display:none!important}
+}
+@media print{
+  body,html{overflow:visible;height:auto}
+  .ide{position:static;display:block}
+  .titlebar,.actbar,.sidebar,.statusbar,.panel,.toast,.tabs,.breadcrumb{display:none!important}
+  .file{display:block!important;page-break-after:always;padding:40px}
+}
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="titlebar">
-    <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M76 8L96 18V82L76 92L32 56L14 70L4 64V36L14 30L32 44L76 8ZM76 28L46 50L76 72V28Z" fill="#007acc"/></svg>
-    <a class="back" id="backLink" href="/charlas/mcp-en-qa/" target="_top">← Volver a la charla</a>
-    <div class="titlebar__tabs"><span>PROBLEMS</span><span>OUTPUT</span><span class="on">TERMINAL</span></div>
-    <span class="titlebar__title">claude — tienda-demo</span>
-    <span><kbd>→</kbd> siguiente <kbd>←</kbd> anterior <kbd>R</kbd> repetir <kbd>N</kbd> notas <kbd>F</kbd> pantalla completa</span>
-  </header>
+<div class="ide" id="ide">
 
-  <div class="main">
-    <section class="term">
-      <div class="transcript" id="transcript"></div>
-      <div class="input" id="input"><span id="inputText"></span><span class="cursor"></span></div>
-      <div class="footer" id="footer"></div>
-    </section>
+<!-- ═══════════════════ TITLE BAR ═══════════════════ -->
+<header class="titlebar">
+  <div class="titlebar__logo">
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="vsg" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#0098e9"/><stop offset="100%" stop-color="#007acc"/></linearGradient></defs>
+      <path d="M76 8L96 18L96 82L76 92L32 56L14 70L4 64L4 36L14 30L32 44L76 8ZM76 28L46 50L76 72L76 28Z" fill="url(#vsg)"/>
+    </svg>
+  </div>
+  <nav class="titlebar__menu">
+    <span class="titlebar__menu__item">File</span>
+    <span class="titlebar__menu__item">Edit</span>
+    <span class="titlebar__menu__item">Selection</span>
+    <span class="titlebar__menu__item">View</span>
+    <span class="titlebar__menu__item">Go</span>
+    <span class="titlebar__menu__item">Run</span>
+    <span class="titlebar__menu__item">Terminal</span>
+    <span class="titlebar__menu__item">Help</span>
+  </nav>
+  <div><a class="titlebar__back" id="backLink" href="/charlas/mcp-en-qa/" target="_top">← Volver a la charla</a></div>
+  <div class="titlebar__search">
+    <div class="titlebar__search__nav">
+      <button>‹</button><button>›</button>
+    </div>
+    <div class="titlebar__search__name"><b>⌕</b>mcp-en-qa</div>
+  </div>
+  <div></div>
+  <div class="titlebar__controls">
+    <button class="titlebar__btn"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><line x1="2" y1="6" x2="10" y2="6"/></svg></button>
+    <button class="titlebar__btn"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><rect x="2.5" y="2.5" width="7" height="7"/></svg></button>
+    <button class="titlebar__btn titlebar__btn--close"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1"><line x1="3" y1="3" x2="9" y2="9"/><line x1="9" y1="3" x2="3" y2="9"/></svg></button>
+  </div>
+</header>
 
-    <aside class="guide">
-      <div id="guideContent"></div>
-      <div class="guide__foot">
-        <div class="dots" id="dots"></div>
-        <div class="next-hint" id="nextHint">→ siguiente</div>
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<div class="main">
+
+  <!-- Activity bar -->
+  <nav class="actbar">
+    <button class="actbar__icon actbar__icon--active" id="actExplorer" onclick="switchSidebar('explorer')" title="Explorer">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+    </button>
+    <button class="actbar__icon" title="Search">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>
+    </button>
+    <button class="actbar__icon" title="Source Control">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="3" r="2"/><circle cx="6" cy="21" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 5v14"/><path d="M18 11v3a3 3 0 0 1-3 3h-3"/></svg>
+      <span class="actbar__badge" id="scBadge">2</span>
+    </button>
+    <button class="actbar__icon" title="Run and Debug">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M8 5v14l11-7L8 5z"/><circle cx="6" cy="18" r="1.5" fill="currentColor"/></svg>
+    </button>
+    <button class="actbar__icon" id="actExtensions" onclick="switchSidebar('extensions')" title="Extensions">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 3H3v7h7V3zm-2 5H5V5h3v3zm2 5H3v7h7v-7zm-2 5H5v-3h3v3zm9-15h-3v3h-2v2h2v3h3v-3h2V8h-2V5zm-1 8h7v7h-7v-7zm5 5v-3h-3v3h3z"/></svg>
+    </button>
+    <button class="actbar__icon" title="Testing">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.8 18.4L14 10.67V6.5l1.35-1.69c.26-.33.03-.81-.39-.81H9.04c-.42 0-.65.48-.39.81L10 6.5v4.17L4.2 18.4c-.49.66-.02 1.6.8 1.6h14c.82 0 1.29-.94.8-1.6z"/></svg>
+    </button>
+    <button class="actbar__icon" title="Chat (C)" id="actChat" onclick="toggleChat()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      <span class="actbar__chat-mark" id="actChatMark"></span>
+    </button>
+    <div class="actbar__spacer"></div>
+    <button class="actbar__icon" title="Accounts">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+    </button>
+    <button class="actbar__icon" title="Settings">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .31.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+    </button>
+  </nav>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+
+    <!-- Explorer view -->
+    <div class="sidebar__view is-active" id="sbExplorer">
+      <div class="sidebar__head">EXPLORER</div>
+      <div class="sidebar__proj">MCP-EN-QA</div>
+      <div class="tree" id="tree"></div>
+    </div>
+
+    <!-- Extensions view -->
+    <div class="sidebar__view" id="sbExtensions">
+      <div class="ext__head">EXTENSIONS</div>
+      <div class="ext__search">Search Extensions in Marketplace</div>
+      <div class="ext__section">
+        <span class="ext__section__arrow"></span>
+        MCP Servers — Installed
+        <span class="ext__section__count">2</span>
       </div>
-    </aside>
+      <div class="ext__list">
+        <div class="ext-card">
+          <div class="ext-card__icon ext-card__icon--atlassian">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none">
+              <defs>
+                <linearGradient id="atGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#0052cc"/>
+                  <stop offset="100%" stop-color="#2684ff"/>
+                </linearGradient>
+              </defs>
+              <path d="M7.04 11.43c-.34-.36-.88-.34-1.16.06l-4.7 6.74a.71.71 0 0 0 .58 1.11h6.59c.27 0 .51-.15.63-.39 1.4-2.93.55-7.37-1.94-7.52z" fill="url(#atGrad)"/>
+              <path d="M11.55 4.36c-2.96 3.96-2.8 9.36.18 13.48l3.1 4.28c.13.19.35.3.58.3h6.59a.71.71 0 0 0 .58-1.11l-9.78-16.95a.71.71 0 0 0-1.25 0z" fill="#2684ff"/>
+            </svg>
+          </div>
+          <div class="ext-card__body">
+            <div class="ext-card__name">Atlassian</div>
+            <div class="ext-card__desc">Atlassian Rovo MCP Server</div>
+            <div class="ext-card__pub">atlassian</div>
+          </div>
+          <div class="ext-card__gear">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .31.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </div>
+        </div>
+
+        <div class="ext-card">
+          <div class="ext-card__icon ext-card__icon--figma">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 24c2.21 0 4-1.79 4-4v-4H8c-2.21 0-4 1.79-4 4s1.79 4 4 4z" fill="#0acf83"/>
+              <path d="M4 12c0-2.21 1.79-4 4-4h4v8H8c-2.21 0-4-1.79-4-4z" fill="#a259ff"/>
+              <path d="M4 4c0-2.21 1.79-4 4-4h4v8H8C5.79 8 4 6.21 4 4z" fill="#f24e1e"/>
+              <path d="M12 0h4c2.21 0 4 1.79 4 4s-1.79 4-4 4h-4V0z" fill="#ff7262"/>
+              <path d="M20 12c0 2.21-1.79 4-4 4s-4-1.79-4-4 1.79-4 4-4 4 1.79 4 4z" fill="#1abcfe"/>
+            </svg>
+          </div>
+          <div class="ext-card__body">
+            <div class="ext-card__name">Figma MCP Server</div>
+            <div class="ext-card__desc">The Figma MCP server brings Figma design context directly into your editor.</div>
+            <div class="ext-card__pub">figma</div>
+          </div>
+          <div class="ext-card__gear">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94 0 .31.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Editor -->
+  <main class="editor">
+    <section class="editor__col">
+    <div class="tabs" id="tabs"></div>
+    <div class="breadcrumb" id="crumb">
+      <span>MCP-EN-QA</span>
+      <span class="breadcrumb__sep"></span>
+      <span id="crumbFolder">01-intro</span>
+      <span class="breadcrumb__sep"></span>
+      <span id="crumbFile" class="breadcrumb__last">01-welcome.md</span>
+      <span class="breadcrumb__spacer"></span>
+      <button class="breadcrumb__srcbtn" id="srcBtn" onclick="toggleSource()"><> Source</button>
+    </div>
+    <div class="body" id="body">
+
+<!-- ═══ s1 · welcome.md ═══ -->
+<article class="file" data-file-id="s1">
+<div class="md md--hero">
+  <div class="hero__bg"></div>
+  <div class="eyebrow">Charla · IA aplicada a QA</div>
+  <div class="number">MCP</div>
+  <div class="title">Cómo trabajo con MCP <em>en QA.</em></div>
+  <div class="sub">Diez minutos sobre conectar la IA al contexto real del proyecto.</div>
+  <div class="meta"><div><span>Joan</span> · QA Tester</div></div>
+  <div class="ticker">
+    <span style="color:var(--c-dim)">// conectado a →</span>
+    <span class="ticker__rotor" id="rotor">
+      <span class="is-on">Jira</span><span>Confluence</span><span>Figma</span>
+    </span>
   </div>
 </div>
-<div class="notes" id="notes" hidden><b>NOTAS DEL PRESENTADOR</b><span id="notesText"></span></div>
+<pre class="source-view"><span class="src-com"># welcome.md — generated by MCP</span>
+
+<span class="src-h1"># MCP</span>
+
+Cómo trabajo con MCP <span class="src-em">*en QA.*</span>
+
+> Diez minutos sobre conectar la IA al contexto real del proyecto.
+
+<span class="src-bold">**Joan**</span> · QA Tester
+
+<span class="src-com"><!-- generado desde confluence/onboarding + jira/profile → --></span></pre>
+</article>
+
+<!-- ═══ s2 · about.md ═══ -->
+<article class="file" data-file-id="s2">
+<div class="md md--about">
+  <div class="about-orn" aria-hidden="true">
+    <div class="about-orn__line about-orn__line--1"></div>
+    <div class="about-orn__line about-orn__line--2"></div>
+    <div class="about-orn__card about-orn__c1"><span></span><span></span><span></span></div>
+    <div class="about-orn__card about-orn__c2"><span></span><span></span><span></span></div>
+    <div class="about-orn__card about-orn__c3"><span></span><span></span><span></span></div>
+    <div class="about-orn__card about-orn__c4"><span></span><span></span><span></span></div>
+  </div>
+  <div class="role">QA TESTER</div>
+  <div class="name">Soy <em>Joan</em>.</div>
+  <p class="why">Compartir es la forma más rápida de mejorar — y de robar tiempo a lo que no añade valor.</p>
+  <div class="about-conn">
+    <span class="about-conn__lbl">// conectado a</span>
+    <span class="about-conn__chip"><i class="jr">JR</i> Jira</span>
+    <span class="about-conn__chip"><i class="cf">CF</i> Confluence</span>
+    <span class="about-conn__chip"><i class="fg">F</i> Figma</span>
+  </div>
+</div>
+<pre class="source-view"><span class="src-com"># about.md</span>
+
+<span class="src-h1"># Soy Joan.</span>
+
+<span class="src-bold">**Rol:**</span> QA Tester
+
+> Compartir es la forma más rápida de mejorar.</pre>
+</article>
+
+<!-- ═══ s3 · poll.md ═══ -->
+<article class="file" data-file-id="s3">
+<div class="md md--poll">
+  <div class="hand">✋</div>
+  <p class="q">¿Quién usa <em>MCP</em> a diario?</p>
+  <p class="q q2">¿Y quién lo tiene conectado a <em>Jira o Confluence</em>?</p>
+</div>
+<pre class="source-view"><span class="src-com"># poll.md — audience interaction</span>
+
+<span class="src-h1"># Pregunta a la sala</span>
+
+✋ Levantad la mano:
+- ¿Quién usa <span class="src-em">*MCP*</span> a diario?
+- ¿Y conectado a <span class="src-em">*Jira o Confluence*</span>?
+
+<span class="src-com"><!-- pausa real — esperar respuesta antes de avanzar --></span></pre>
+</article>
+
+<!-- ═══ s4 · before.log ═══ -->
+<article class="file" data-file-id="s4">
+<div class="log">
+  <div class="log__head">QA SESSION · BEFORE MCP · 9:00 — 9:12</div>
+<div class="log__line"><span class="tt">09:02:14</span>  <span class="pr">$</span> open jira/DEMO-123</div>
+<div class="log__line"><span class="tt">09:02:48</span>  <span class="ac">→</span> copy description · paste to chat</div>
+<div class="log__line"><span class="tt">09:02:51</span>  <span class="wn">⚠</span> 6 of 8 comments not pasted <span class="tt">(too long)</span></div>
+<div class="log__line"><span class="tt">09:03:22</span>  <span class="yo">?</span> ask: "¿devolución con vale?"</div>
+<div class="log__line"><span class="tt">09:03:25</span>  <span class="ac">←</span> model: <span class="tt">"no context, please provide details"</span></div>
+<div class="log__line"><span class="tt">09:04:31</span>  <span class="pr">$</span> open confluence · searching manually</div>
+<div class="log__line"><span class="tt">09:07:02</span>  <span class="wn">…</span> still searching</div>
+<div class="log__line"><span class="tt">09:09:14</span>  <span class="wn">…</span> wrong page, going back</div>
+<div class="log__line"><span class="tt">09:11:48</span>  <span class="ok">✓</span> found page<span class="log__cur"></span></div>
+</div>
+</article>
+
+<!-- ═══ s5 · ai-sin-mcp.chat (NUEVO: anti-demo fail) ═══ -->
+<article class="file" data-file-id="s5" data-stream="sinmcp">
+<div class="cv">
+  <div class="cv__head">02b · Anti-demo</div>
+  <h2 class="cv__title">La misma pregunta. <em>Sin contexto.</em></h2>
+  <p class="cv__intro">Mismo modelo, misma pregunta. Sin MCP, el modelo está ciego.</p>
+  <div class="cm">
+    <div class="cm__lbl">Yo</div>
+    <div class="cm__u cm__u--gray">¿Cómo funcionan las devoluciones con vale en Tienda Demo?</div>
+  </div>
+  <div class="cm">
+    <div class="cm__lbl">IA Generalista · sin contexto</div>
+    <div class="cm__b" data-stream-target>
+      <div class="typing-dots" data-typing><span></span><span></span><span></span></div>
+      <span class="cm__b__title sh" data-stream-line="0"><span style="color:var(--text-m)">Para responder con precisión, necesitaría más contexto sobre tu sistema.</span></span>
+      <ul>
+        <li class="sh" data-stream-line="1">¿Cuál es la política de devoluciones de la tienda?</li>
+        <li class="sh" data-stream-line="2">¿Los vales son físicos o electrónicos? ¿Tienen caducidad?</li>
+        <li class="sh" data-stream-line="3">¿Hay integración con algún sistema de gestión de clientes?</li>
+        <li class="sh" data-stream-line="4">¿Puedes compartir la documentación interna o los criterios de aceptación?</li>
+      </ul>
+      <span class="cm__b__body sh cm__b--muted" data-stream-line="5">Sin acceso a la documentación de Tienda Demo, no puedo darte una respuesta específica.</span>
+    </div>
+  </div>
+</div>
+</article>
+
+<!-- ═══ s6 · ai-con-mcp.chat (NUEVO: anti-demo win) ═══ -->
+<article class="file" data-file-id="s6" data-stream="conmcp">
+<div class="cv">
+  <div class="cv__head">02c · Anti-demo</div>
+  <div class="demo-lbl demo-lbl--win">✓ Copilot · con MCP Confluence · contexto real</div>
+  <h2 class="cv__title">La misma pregunta. <em>Con contexto.</em></h2>
+  <p class="cv__intro">Mismo modelo. Ahora con MCP apuntando a la wiki de Tienda Demo.</p>
+  <div class="cm">
+    <div class="cm__lbl">Yo</div>
+    <div class="cm__u">¿Cómo funcionan las devoluciones con vale en Tienda Demo?</div>
+  </div>
+  <div class="cm">
+    <div class="cm__lbl">Copilot · vía MCP Confluence</div>
+    <div class="cm__b" data-stream-target>
+      <div class="typing-dots" data-typing><span></span><span></span><span></span></div>
+      <span class="cm__b__title sh" data-stream-line="0">He encontrado la página <em>Guía de devoluciones (ejemplo ficticio)</em>. Resumen:</span>
+      <ul>
+        <li class="sh" data-stream-line="1">Aplica cuando el ticket original es &gt; 15 días o sin justificante físico</li>
+        <li class="sh" data-stream-line="2">Genera vale electrónico con caducidad de 6 meses</li>
+        <li class="sh" data-stream-line="3">La diferencia queda como saldo en el vale</li>
+        <li class="sh" data-stream-line="4">Requiere aprobación del encargado</li>
+      </ul>
+      <div class="chat-src sh" data-stream-line="5">Tienda Demo · Guía de devoluciones (ejemplo ficticio)</div>
+    </div>
+  </div>
+</div>
+</article>
+
+<!-- ═══ s7 · what-is-mcp.md ═══ -->
+<article class="file" data-file-id="s7">
+<div class="md">
+  <div class="eyebrow">03 · Concepto</div>
+  <h1>MCP, el <em>USB-C</em> de los modelos.</h1>
+  <p class="lead"><strong>Model Context Protocol.</strong> Estándar abierto. Cualquier herramienta puede "enchufarse" al modelo.</p>
+  <p>Tres piezas. <strong>Host</strong>: la app donde trabajas (VS Code). <strong>Cliente MCP</strong>: vive dentro, habla el protocolo. <strong>Servidor MCP</strong>: lo publica cada herramienta (Atlassian, Figma…).</p>
+  <p>El servidor expone <strong>tools</strong> (acciones), <strong>resources</strong> (datos) y <strong>prompts</strong> (plantillas). Estándar abierto, no propietario.</p>
+  <div class="arch-d">
+    <div class="arch-d__row">
+      <div class="arch-d__box"><div class="arch-d__label">Host</div><div class="arch-d__name">VS Code</div><div class="arch-d__sub">app donde trabajas</div></div>
+      <div class="arch-d__arrow">⇄</div>
+      <div class="arch-d__box"><div class="arch-d__label">Cliente MCP</div><div class="arch-d__name">Copilot</div><div class="arch-d__sub">habla el protocolo</div></div>
+      <div class="arch-d__arrow">⇄</div>
+      <div class="arch-d__box arch-d__box--s"><div class="arch-d__label">Servidor MCP</div><div class="arch-d__name">Atlassian · Figma</div><div class="arch-d__sub">expone la herramienta</div></div>
+    </div>
+    <div class="arch-d__foot">expone → <strong>tools</strong> · <strong>resources</strong> · <strong>prompts</strong></div>
+  </div>
+</div>
+<pre class="source-view"><span class="src-h1"># MCP — Model Context Protocol</span>
+
+<span class="src-bold">**El USB-C de los modelos.**</span> Estándar abierto.
+
+<span class="src-h2">## Arquitectura</span>
+
+```
+[Host: VS Code] ⇄ [Cliente MCP: Copilot] ⇄ [Servidor: Atlassian/Figma]
+```
+
+Expone: <span class="src-bold">**tools**</span> (acciones) · <span class="src-bold">**resources**</span> (datos) · <span class="src-bold">**prompts**</span> (plantillas)
+
+<span class="src-com"><!-- Especificación: modelcontextprotocol.io --></span></pre>
+</article>
+
+<!-- ═══ s8 · what-is-not.md ═══ -->
+<article class="file" data-file-id="s8">
+<div class="md">
+  <div class="eyebrow">04 · Capacidades reales</div>
+  <h1>Lo que <em>puedo</em> y lo que <em>no</em> con MCP.</h1>
+  <p>Tres herramientas conectadas hoy. Lectura va de sobra; escritura, con matices; admin, casi nada. <strong>El alcance importa más que la teoría.</strong></p>
+  <div class="cap-grid">
+
+    <!-- JIRA -->
+    <div class="cap-col">
+      <div class="cap-col__head">
+        <span class="cap-col__icon cap-col__icon--jira">JR</span>
+        <span class="cap-col__name">Jira <span>(Atlassian)</span></span>
+      </div>
+      <div class="cap-card cap-card--yes">
+        <div class="cap-card__lbl">✓ puedo</div>
+        <ul>
+          <li><strong>Lectura:</strong> issues, JQL, proyectos, metadatos, tipos</li>
+          <li><strong>Escritura:</strong> crear/editar issues, comentar, worklogs, links, cambiar estado</li>
+        </ul>
+      </div>
+      <div class="cap-card cap-card--no">
+        <div class="cap-card__lbl">✕ no puedo</div>
+        <ul>
+          <li><strong>Xray:</strong> sin crear/editar tests <em>(import JSON bulk manual)</em></li>
+          <li><strong>Adjuntos:</strong> sin subir ni descargar</li>
+          <li><strong>Admin:</strong> sin proyectos, usuarios ni permisos</li>
+          <li><strong>Automatizaciones:</strong> sin reglas</li>
+          <li><strong>Sprints / tableros:</strong> sin gestión</li>
+          <li><strong>Bitbucket:</strong> sin acceso a código</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- CONFLUENCE -->
+    <div class="cap-col">
+      <div class="cap-col__head">
+        <span class="cap-col__icon cap-col__icon--conf">CF</span>
+        <span class="cap-col__name">Confluence <span>(Atlassian)</span></span>
+      </div>
+      <div class="cap-card cap-card--yes">
+        <div class="cap-card__lbl">✓ puedo</div>
+        <ul>
+          <li><strong>Lectura:</strong> páginas, espacios, comentarios, CQL</li>
+          <li><strong>Escritura:</strong> crear y actualizar páginas, comentarios</li>
+        </ul>
+      </div>
+      <div class="cap-card cap-card--no">
+        <div class="cap-card__lbl">✕ no puedo</div>
+        <ul>
+          <li><strong>Adjuntos:</strong> sin subida/descarga</li>
+          <li><strong>Admin de espacios:</strong> sin gestión</li>
+          <li><strong>Permisos:</strong> sin tocar accesos</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- FIGMA -->
+    <div class="cap-col">
+      <div class="cap-col__head">
+        <span class="cap-col__icon cap-col__icon--fig"></span>
+        <span class="cap-col__name">Figma</span>
+      </div>
+      <div class="cap-card cap-card--yes">
+        <div class="cap-card__lbl">✓ puedo</div>
+        <ul>
+          <li><strong>Lectura:</strong> componentes, screenshots, metadatos</li>
+          <li><strong>Variables / tokens</strong> del archivo</li>
+          <li><strong>FigJam:</strong> leer tableros</li>
+          <li><strong>Code Connect:</strong> mappings Figma ↔ código</li>
+          <li><strong>Generación:</strong> diagramas FigJam, diseños</li>
+        </ul>
+      </div>
+      <div class="cap-card cap-card--no">
+        <div class="cap-card__lbl">✕ no puedo</div>
+        <ul>
+          <li><strong>Editar</strong> diseños existentes (capas, estilos)</li>
+          <li><strong>Subir assets</strong> o imágenes</li>
+          <li><strong>Permisos</strong> de archivos/proyectos</li>
+          <li><strong>Prototipados</strong> o flujos interactivos</li>
+          <li><strong>Equipos / orgs:</strong> sin gestión</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+<pre class="source-view"><span class="src-h1"># Lo que puedo y lo que no con MCP</span>
+
+<span class="src-h2">## Jira (Atlassian)</span>
+<span class="src-bold">**✓ Puedo**</span>
+- Lectura: issues, JQL, proyectos, metadatos
+- Escritura: crear/editar issues, comentar, worklogs, links, estado
+
+<span class="src-bold">**✕ No puedo**</span>
+- Xray: crear/editar tests (import JSON manual)
+- Adjuntos, admin Jira, automatizaciones, sprints, Bitbucket
+
+<span class="src-h2">## Confluence (Atlassian)</span>
+<span class="src-bold">**✓ Puedo**</span>
+- Lectura: páginas, espacios, comentarios, CQL
+- Escritura: crear y actualizar páginas + comentarios
+
+<span class="src-bold">**✕ No puedo**</span>
+- Adjuntos, admin de espacios, permisos
+
+<span class="src-h2">## Figma</span>
+<span class="src-bold">**✓ Puedo**</span>
+- Lectura: componentes, screenshots, metadatos
+- Variables/tokens, FigJam, Code Connect, generación
+
+<span class="src-bold">**✕ No puedo**</span>
+- Editar diseños, subir assets, permisos, prototipos, equipos</pre>
+</article>
+
+<!-- ═══ s9 · mcp.json ═══ -->
+<article class="file" data-file-id="s9">
+<div class="code">
+  <div class="code__gutter"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span></div>
+  <div class="code__content"><pre><span class="tk-p">{</span>
+  <span class="tk-k">"$schema"</span><span class="tk-p">:</span> <span class="tk-s">"https://aka.ms/vscode-mcp"</span><span class="tk-p">,</span>
+  <span class="tk-k">"servers"</span><span class="tk-p">:</span> <span class="tk-p">{</span>
+    <span class="tk-k">"atlassian"</span><span class="tk-p">:</span> <span class="tk-p">{</span>
+      <span class="tk-k">"url"</span><span class="tk-p">:</span> <span class="tk-s">"https://mcp.atlassian.com/v1/sse"</span><span class="tk-p">,</span>
+      <span class="tk-k">"auth"</span><span class="tk-p">:</span> <span class="tk-s">"oauth"</span>
+    <span class="tk-p">},</span>
+    <span class="tk-k">"figma"</span><span class="tk-p">:</span> <span class="tk-p">{</span>
+      <span class="tk-k">"command"</span><span class="tk-p">:</span> <span class="tk-s">"npx"</span><span class="tk-p">,</span>
+      <span class="tk-k">"args"</span><span class="tk-p">:</span> <span class="tk-p">[</span><span class="tk-s">"-y"</span><span class="tk-p">,</span> <span class="tk-s">"figma-mcp-server"</span><span class="tk-p">]</span>
+    <span class="tk-p">}</span>
+  <span class="tk-p">}</span>
+<span class="tk-p">}</span>
+
+<span class="tk-c">// el modelo respeta los permisos de tu cuenta</span></pre></div>
+  <div class="code__split">
+    <h3>● mi setup</h3>
+    <ul>
+      <li><strong>Host</strong> — VS Code + copilot</li>
+      <li><strong>Modelo</strong> — GitHub Copilot</li>
+      <li><strong>MCP Atlassian</strong> — Jira + Confluence</li>
+      <li><strong>MCP Figma</strong> — mockups de la app</li>
+      <li><strong>Auth</strong> — OAuth: solo ve lo que tú ves</li>
+    </ul>
+    
+  </div>
+</div>
+</article>
+
+<!-- ═══ s10 · jira.chat ═══ -->
+<article class="file" data-file-id="s10" data-stream="jira">
+<div class="cv">
+  <div class="cv__head">06 · Caso 1</div>
+  <h2 class="cv__title">Jira como <em>contexto vivo</em></h2>
+  <p class="cv__intro">Pego el link. El modelo lee descripción, AC, comentarios y adjuntos. <strong>No copio nada.</strong></p>
+  <div class="cm">
+    <div class="cm__lbl">Yo</div>
+    <div class="cm__u">Resúmeme esta historia y dime qué ambigüedades ves en los AC <span class="lk">jira/DEMO-123</span>
+      <div class="cm__meta"><span>Sprint 47</span><span>5 pt</span><span>@joan</span><span>In Progress</span></div>
+    </div>
+  </div>
+  <div class="cm">
+    <div class="cm__lbl">Copilot · vía MCP Atlassian</div>
+    <div class="cm__b" data-stream-target>
+      <div class="typing-dots" data-typing><span></span><span></span><span></span></div>
+      <span class="cm__b__title sh" data-stream-line="0"><strong>DEMO-123 · Cupón de fidelización en línea con promo activa</strong></span>
+      <span class="cm__b__body sh" data-stream-line="1">Aplica un cupón del 10% sobre líneas que ya tienen promoción.</span>
+      <ul>
+        <li class="sh" data-stream-line="2">AC-2 no especifica el orden de aplicación (¿promo o descuento primero?)</li>
+        <li class="sh" data-stream-line="3">AC-4 dice "redondear al céntimo" pero no la regla (banker's / half-up)</li>
+        <li class="sh" data-stream-line="4">Sin AC explícito para devolución posterior de la línea</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</article>
+
+<!-- ═══ s11 · tests.feature ═══ -->
+<article class="file" data-file-id="s11">
+<div class="feature">
+  <div class="feat-pipe">
+    <span class="fp">Jira</span><span class="fp-arr">→</span>
+    <span class="fp">análisis</span><span class="fp-arr">→</span>
+    <span class="fp fp--a">.feature + .cs</span><span class="fp-arr">→</span>
+    <span class="fp">review · commit</span>
+  </div>
+<div class="fl"><span class="fl__n">1</span><span class="fl__c"><span class="tk-kw">Feature:</span> Cupón de fidelización sobre línea con promo</span></div>
+<div class="fl"><span class="fl__n">2</span><span class="fl__c">&nbsp;</span></div>
+<div class="fl"><span class="fl__n">3</span><span class="fl__c">  <span class="tk-kw">Scenario:</span> Aplicar cupón del 10% sobre artículo en 2x1</span></div>
+<div class="fl"><span class="fl__n">4</span><span class="fl__c">    <span class="tk-kw">Given</span> el cliente tiene el cupón <span class="tk-s">"FIDELIDAD10"</span></span><span class="fl__hint">datos · revisar usuario seed</span></div>
+<div class="fl"><span class="fl__n">5</span><span class="fl__c">    <span class="tk-kw">And</span> el ticket contiene <span class="tk-s">"Camiseta demo"</span> con promo <span class="tk-s">"2x1"</span></span><span class="fl__hint">aislamiento de datos</span></div>
+<div class="fl"><span class="fl__n">6</span><span class="fl__c">    <span class="tk-kw">When</span> aplica el cupón del <span class="tk-n">10</span>%</span><span class="fl__hint">verificar AutomationId</span></div>
+<div class="fl"><span class="fl__n">7</span><span class="fl__c">    <span class="tk-kw">Then</span> el subtotal refleja ambos descuentos</span><span class="fl__hint">¿assert demasiado laxo?</span></div>
+<div class="fl"><span class="fl__n">8</span><span class="fl__c">    <span class="tk-kw">And</span> el ticket impreso muestra el desglose</span></div>
+<div class="fl"><span class="fl__n">9</span><span class="fl__c">    <span class="tk-kw">And</span> la devolución posterior recalcula correctamente</span><span class="fl__hint">cobertura: ¿AC real?</span></div>
+</div>
+</article>
+
+<!-- ═══ s12 · confluence.chat ═══ -->
+<article class="file" data-file-id="s12" data-stream="confluence">
+<div class="cv">
+  <div class="cv__head">08 · Caso 3</div>
+  <h2 class="cv__title">Confluence como <em>memoria del equipo</em></h2>
+  <p class="cv__intro">Pregunto en lenguaje natural. Busca, sintetiza y <strong>devuelve el link a la fuente</strong>.</p>
+  <div class="cm">
+    <div class="cm__lbl">Yo</div>
+    <div class="cm__u">¿Cómo funcionan las devoluciones con vale en Tienda Demo?</div>
+  </div>
+  <div class="cm">
+    <div class="cm__lbl">Copilot · vía MCP Confluence</div>
+    <div class="cm__b" data-stream-target>
+      <div class="typing-dots" data-typing><span></span><span></span><span></span></div>
+      <span class="cm__b__title sh" data-stream-line="0">He encontrado la documentación. Resumen:</span>
+      <ul>
+        <li class="sh" data-stream-line="1">Aplica cuando el ticket original es &gt; 15 días o sin justificante</li>
+        <li class="sh" data-stream-line="2">Genera vale electrónico con caducidad de 6 meses</li>
+        <li class="sh" data-stream-line="3">La diferencia queda como saldo en el vale</li>
+        <li class="sh" data-stream-line="4">Requiere aprobación del encargado</li>
+      </ul>
+      <div class="chat-src sh" data-stream-line="5">Tienda Demo · Guía de devoluciones (ejemplo ficticio)</div>
+    </div>
+  </div>
+</div>
+</article>
+
+<!-- ═══ s16 · generate-followup.sh (NUEVO: closing terminal) ═══ -->
+<article class="file" data-file-id="s16">
+<div class="cterm">
+  <div class="cterm__win">
+    <div class="cterm__top">
+      <div class="cterm__dots"><span></span><span></span><span></span></div>
+      <span class="cterm__ttl">generate-followup.sh — bash</span>
+    </div>
+    <div class="cterm__body" id="ctermBody">
+      <span class="cterm__line" id="ct0"><span class="ct-pr">joan@laptop</span>:<span style="color:var(--syn-k)">~/mcp-en-qa</span><span class="ct-pr">$</span> <span class="ct-cmd">bash generate-followup.sh</span></span>
+      <span class="cterm__line" id="ct1"><span class="ct-muted">Leyendo contexto de la presentación...</span></span>
+      <span class="cterm__line" id="ct2"><span class="ct-ok">✓</span> <span class="ct-muted">13 archivos · 3 casos de uso · capacidades reales mapeadas</span></span>
+      <span class="cterm__line" id="ct3">&nbsp;</span>
+      <span class="cterm__line" id="ct4"><span class="ct-wn">[1/3]</span> Creando página en Confluence...</span>
+      <span class="cterm__line" id="ct5"><span class="ct-muted">      Título: "MCP Setup Guide · QA"</span></span>
+      <span class="cterm__line" id="ct6"><span class="ct-muted">      Secciones: instalación · casos de uso · capacidades · FAQ</span></span>
+      <span class="cterm__line" id="ct7"><span class="ct-ok">      ✓ Publicado → </span><span class="ct-link">wiki.example.com/spaces/QA/mcp-setup</span></span>
+      <span class="cterm__line" id="ct8">&nbsp;</span>
+      <span class="cterm__line" id="ct9"><span class="ct-wn">[2/3]</span> Creando Epic en Jira...</span>
+      <span class="cterm__line" id="ct10"><span class="ct-muted">      Proyecto: QA · Tipo: Epic · 5 historias de seguimiento</span></span>
+      <span class="cterm__line" id="ct11"><span class="ct-ok">      ✓ Epic DEMO-200 creada → 5 historias hijas listas</span></span>
+      <span class="cterm__line" id="ct12">&nbsp;</span>
+      <span class="cterm__line" id="ct13"><span class="ct-wn">[3/3]</span> Preparando notificación al equipo...</span>
+      <span class="cterm__line" id="ct14"><span class="ct-muted">      Canal: Teams · #qa-equipo</span></span>
+      <span class="cterm__line" id="ct15"><span class="ct-muted">      Vista previa: "Sesión MCP completada · próximos pasos disponibles"</span></span>
+      <span class="cterm__line" id="ct16"><span style="color:var(--accent)">      → Requiere tu confirmación antes de enviar <span style="color:var(--text)">[Y/n]:</span> <span class="ct-cur"></span></span></span>
+    </div>
+  </div>
+</div>
+<div class="cterm__thanks" id="ctermThanks">
+  <div class="quote">El modelo no se ha vuelto más listo.<br><em>Ahora ve dónde trabajas.</em></div>
+</div>
+</article>
+
+    </div><!-- /body -->
+    </section><!-- /editor__col -->
+
+    <!-- ═══ CHAT PANEL (right) ═══ -->
+    <aside class="chatpanel" id="chatPanel">
+      <header class="cp__head">
+        <span class="cp__head__dot"></span>
+        <span class="cp__head__title">Chat</span>
+        <span class="cp__head__model">Copilot</span>
+        <button class="cp__head__x" onclick="toggleChat()" title="Hide (C)">×</button>
+      </header>
+      <div class="cp__messages" id="cpMessages">
+        <div class="cp__empty">
+          <div class="cp__empty__dot"></div>
+          // chat awaiting context<br>
+          // navigate to begin
+        </div>
+      </div>
+      <!-- Presenter HUD — lives inside chat panel, above input, shown with N -->
+      <div class="cp__hud" id="presHud">
+        <div class="cp__hud__counter">
+          <span class="cp__hud__num" id="hudNum">01</span>
+          <span class="cp__hud__total">/ 13</span>
+          <span class="cp__hud__label" id="hudLabel">inicio</span>
+        </div>
+        <div class="cp__hud__next">
+          <span class="cp__hud__arrow">→</span>
+          <span class="cp__hud__nextname" id="hudNext">02-about.md</span>
+        </div>
+        <div class="cp__hud__notes">
+          <div class="cp__hud__noteslbl">notas del presentador</div>
+          <div class="cp__hud__notestxt" id="hudNotes"></div>
+        </div>
+      </div>
+      <div class="cp__input">
+        <div class="cp__input__box">
+          <div class="cp__input__placeholder" id="cpPlaceholder"><em>// type a message or pick a file...</em></div>
+          <div class="cp__input__send">↵</div>
+        </div>
+        <div class="cp__hint">
+          <span><kbd>C</kbd> ocultar</span>
+          <span><kbd>⇧R</kbd> replay</span>
+        </div>
+      </div>
+    </aside>
+  </main>
+</div><!-- /main -->
+
+<!-- ═══════════════════ STATUS BAR ═══════════════════ -->
+<footer class="statusbar">
+  <div class="sbi">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.6 1l6.9 12-1 1.8h-13l-1-1.8L7.4 1h1.2zm-.6.4L1.5 13.4h13L8 1.4zM7 6h2v4H7V6zm0 5h2v2H7v-2z"/></svg>
+    <span id="sbErrors">0</span>
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8.6 1l6.9 12-1 1.8h-13l-1-1.8L7.4 1h1.2zm-.6.4L1.5 13.4h13L8 1.4zM7 6h2v4H7V6zm0 5h2v2H7v-2z"/></svg>
+    <span id="sbWarnings">0</span>
+  </div>
+  <div class="sbi">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M11 4.41v6.5a2.5 2.5 0 0 1-2.5 2.5H6.83a2 2 0 1 0-2 2H5v-2H4.83a2 2 0 0 0 0-1.92V8a2 2 0 0 0 1-3.42V4.41a2 2 0 1 1 6 0z"/></svg>
+    main
+  </div>
+  <div class="sbi">
+    <span class="sbi__dot" style="background:var(--green)"></span>
+    atlassian-mcp · figma-mcp · connected
+  </div>
+  <div class="sbi">Copilot</div>
+  <div class="sbi sbi--right" id="sbSection">01/13 · inicio</div>
+  <div class="sbi sbi--right" id="sbFile">01-welcome.md</div>
+  <div class="sbi sbi--right">UTF-8</div>
+  <div class="sbi sbi--right">
+    <svg viewBox="0 0 16 16" fill="currentColor"><path d="M13.377 10.573a7.63 7.63 0 0 1-.383-2.38V6.195a5.115 5.115 0 0 0-1.268-3.446 5.138 5.138 0 0 0-3.242-1.722c-.694-.072-1.4 0-2.07.214a4.831 4.831 0 0 0-1.764 1.012 5.36 5.36 0 0 0-1.243 1.671 4.992 4.992 0 0 0-.45 2.13v2.275a7.638 7.638 0 0 1-.382 2.379L2 12.21l.71.71h3.32a2.018 2.018 0 1 0 3.94 0h3.32l.71-.71-.623-1.637z"/></svg>
+  </div>
+</footer>
+
+</div><!-- /ide -->
+
+<!-- ═══════════════════ PANEL ═══════════════════ -->
+<div class="panel" id="panel">
+  <div class="panel__tabs">
+    <div class="panel__tab panel__tab--active" data-ptab="notes" onclick="switchPanelTab('notes')">NOTAS</div>
+    <div class="panel__tab" data-ptab="output" onclick="switchPanelTab('output')">OUTPUT</div>
+    <div class="panel__tab" data-ptab="problems" onclick="switchPanelTab('problems')">PROBLEMS <span id="probBadge"></span></div>
+    <div class="panel__tab" data-ptab="git" onclick="switchPanelTab('git')">GIT LOG</div>
+    <div class="panel__close"><kbd>N</kbd> ocultar</div>
+  </div>
+  <div class="panel__body">
+    <!-- Notes -->
+    <div class="panel__section is-active" id="ps-notes">
+      <div><span class="panel__prompt">joan@laptop</span>:<span class="panel__path">~/mcp-en-qa</span><span class="panel__prompt">$</span> cat notas/<span id="pFilename">s1.notes</span></div>
+      <div class="panel__notes" id="pNotes"></div>
+    </div>
+    <!-- Output trace -->
+    <div class="panel__section" id="ps-output">
+      <div id="traceContent"><span class="trace__empty">No hay trace para este archivo. Navega a un slide con MCP activo.</span></div>
+    </div>
+    <!-- Problems -->
+    <div class="panel__section" id="ps-problems">
+      <div id="probContent"><div class="prob__empty">No problems detected.</div></div>
+    </div>
+    <!-- Git log -->
+    <div class="panel__section" id="ps-git">
+      <div class="git__row"><span class="git__hash">d4f2a1c</span><span class="git__msg">Add cupon_fidelizacion test scaffold from DEMO-123</span><span class="git__meta">Joan · hace 2h</span></div>
+      <div class="git__row"><span class="git__hash">9c3b8e7</span><span class="git__msg">Update DEMO-123 AC analysis via Jira MCP</span><span class="git__meta">Joan · hace 3h</span></div>
+      <div class="git__row"><span class="git__hash">4a1d923</span><span class="git__msg">Generate confluence devoluciones-vale summary</span><span class="git__meta">Joan · hace 5h</span></div>
+      <div class="git__row"><span class="git__hash">1b7f0c2</span><span class="git__msg">Initial feature setup for DEMO-100</span><span class="git__meta">Joan · hace 1d</span></div>
+      <div class="git__row"><span class="git__hash">8e2a4f1</span><span class="git__msg">feat: add MCP Atlassian + Figma config to .vscode</span><span class="git__meta">Joan · hace 2d</span></div>
+      <div class="git__row"><span class="git__hash">3c9f012</span><span class="git__msg">chore: initial project setup mcp-en-qa</span><span class="git__meta">Joan · hace 3d</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 
 <script>
-/* ============================================================
-   1. Motor de animación
-   - sleep() espera, salvo en "modo rápido" (skipping), que termina al instante.
-   - Cambiar de escena incrementa `gen`: las animaciones viejas se cancelan.
-   ============================================================ */
-const ABORT = Symbol("abort");
-let skipping = false;  // true = completar la animación actual sin esperas
-let gen = 0;           // generación: cambia al saltar de escena
-let pendientes = [];   // esperas en curso (para poder adelantarlas)
+/* ─────────────────── DATA ─────────────────── */
+const FILES = [
+  {id:'s1', name:'01-welcome.md', folder:'01-intro', icon:'md', label:'inicio',
+   notes:'Buenas. <em>Cómo trabajo con MCP en QA.</em> Diez minutos. Tres herramientas: Jira, Confluence, Figma. Lo que uso cada semana en el proyecto.',
+   probs:[], trace:[], srcMode:true,
+   chat:{
+     user:'Genera <code>welcome.md</code> desde <em>confluence/onboarding</em>',
+     reply:[
+       {k:'p', t:'He leído la página <em>QA · Onboarding</em>. Aquí el hero:'},
+       {k:'li', t:'Título: <strong>"MCP"</strong> — protagonista'},
+       {k:'li', t:'Sub: <em>cómo trabajo con MCP en QA</em>'},
+       {k:'li', t:'Conectado a: Jira · Confluence · Figma'},
+       {k:'src', t:'QA · Onboarding'}
+     ]
+   }},
+  {id:'s2', name:'02-about.md', folder:'01-intro', icon:'md', label:'quién soy',
+   notes:'Para los que no me conocéis: <em>Joan, QA Tester</em>. Lo que viene no es teoría — lo que sigue es lo que comparto porque <em>compartir es la forma más rápida de mejorar.</em>',
+   probs:[], trace:[], srcMode:true,
+   chat:{
+     user:'Hazme un slide <em>about</em> minimal, con una frase inspiradora',
+     reply:[
+       {k:'p', t:'Slide reducido a tres elementos:'},
+       {k:'li', t:'Rol: <strong>QA Tester</strong>'},
+       {k:'li', t:'Nombre: <strong>Soy Joan</strong>'},
+       {k:'li', t:'Tagline: <em>compartir es la forma más rápida de mejorar</em>'},
+       {k:'p', t:'Menos es más. Sin tags, sin stack — eso va saliendo en los casos.'}
+     ]
+   }},
+  {id:'s3', name:'03-poll.md', folder:'01-intro', icon:'md', label:'pregunta a la sala',
+   notes:'Antes de meterme, una pregunta. ¿Quién usa <em>MCP</em> a diario? ¿Y conectado a Jira o Confluence? <em>Pausa real.</em> Propósito: medir punto de partida de la sala — si nadie levanta la mano, el resto se entiende mejor; si muchos, ajusto la profundidad. Hilo después: <em>"perfecto, esto es lo que yo hago con eso"</em>.',
+   probs:[], trace:[], srcMode:true,
+   chat:{
+     user:'Necesito un <em>slide de pausa</em> para preguntar a la sala',
+     reply:[
+       {k:'p', t:'Listo. Dos preguntas para levantar mano:'},
+       {k:'li', t:'¿Quién usa <strong>MCP</strong> a diario?'},
+       {k:'li', t:'¿Y conectado a Jira o Confluence?'},
+       {k:'p', t:'Mano animada + nota <em>"esperad la respuesta"</em>. Propósito: calibrar el nivel antes de seguir.'}
+     ]
+   }},
+  {id:'s4', name:'04-before.log', folder:'02-context', icon:'log', label:'antes de MCP',
+   notes:'Un día normal: abro Jira, copio, pego. <em>Comentarios y adjuntos quedan fuera.</em> Si no conozco una operativa, Confluence a mano. Ese log es mi mañana real.',
+   probs:[], trace:[], srcMode:false,
+   chat:{empty:true, msg:'// before MCP\n// no tools configured\n// chat unavailable'}
+  },
+  {id:'s5', name:'05-ai-sin-mcp.chat', folder:'02-context', icon:'chat', label:'anti-demo · sin MCP',
+   notes:'Misma pregunta al modelo generalista, <em>sin MCP.</em> Fijaos en la respuesta: pide contexto que nosotros ya tenemos. El modelo es inteligente pero está ciego.',
+   probs:[], trace:[
+     {cls:'trace__info', t:'09:03:25', msg:'[no-mcp] no external tools configured'},
+     {cls:'trace__info', t:'09:03:25', msg:'[no-mcp] using base training context only'},
+     {cls:'trace__val',  t:'09:03:26', msg:'[warn] response may be generic — no domain context'}
+   ], srcMode:false,
+   chat:{
+     user:'¿Cómo funcionan las devoluciones con vale en Tienda Demo?',
+     reply:[
+       {k:'p', t:'Para responder con precisión, necesitaría más contexto:'},
+       {k:'li', t:'¿Cuál es la política de devoluciones de la tienda?'},
+       {k:'li', t:'¿Los vales son físicos o electrónicos?'},
+       {k:'li', t:'¿Puedes compartir la documentación interna?'},
+       {k:'p', t:'<em>Sin acceso a la doc de Tienda Demo, no puedo darte una respuesta específica.</em>'}
+     ]
+   }},
+  {id:'s6', name:'06-ai-con-mcp.chat', folder:'02-context', icon:'chat', label:'anti-demo · con MCP',
+   notes:'<em>Misma pregunta, mismo modelo.</em> Ahora con MCP apuntando a la wiki de Tienda Demo. El modelo no se ha vuelto más listo — ahora ve dónde trabajamos.',
+   probs:[], trace:[
+     {cls:'trace__call', t:'09:03:41', msg:'[atlassian-mcp] → searchConfluence("devoluciones vale")'},
+     {cls:'trace__ok',   t:'09:03:42', msg:'[atlassian-mcp] ← 200 OK · 318ms · 3 pages found'},
+     {cls:'trace__info', t:'09:03:42', msg:'[claude] context enriched · 2.1k tokens · reasoning: 0.8s'}
+   ], srcMode:false,
+   chat:{
+     user:'¿Cómo funcionan las devoluciones con vale en Tienda Demo?',
+     reply:[
+       {k:'p', t:'He encontrado <em>Guía de devoluciones (ejemplo ficticio)</em>:'},
+       {k:'li', t:'Aplica cuando ticket es &gt; 15 días o sin justificante'},
+       {k:'li', t:'Vale electrónico, caducidad <strong>6 meses</strong>'},
+       {k:'li', t:'La diferencia queda como saldo en el vale'},
+       {k:'li', t:'Requiere aprobación del encargado'},
+       {k:'src', t:'wiki/guia-devoluciones (ficticio)'}
+     ]
+   }},
+  {id:'s7', name:'07-what-is-mcp.md', folder:'02-context', icon:'md', label:'qué es MCP',
+   notes:'MCP es el <em>USB-C de los modelos</em>. Tres piezas: Host (VS Code), Cliente MCP (vive dentro), Servidor MCP (lo publica cada herramienta). Estándar abierto.',
+   probs:[], trace:[], srcMode:true,
+   chat:{
+     user:'Explícame qué es MCP en una frase, para alguien de QA',
+     reply:[
+       {k:'p', t:'<strong>MCP</strong> es el protocolo abierto que conecta cualquier IA con tus herramientas reales — Jira, Confluence, Figma…'},
+       {k:'p', t:'Tres piezas:'},
+       {k:'li', t:'<strong>Host</strong> · VS Code (la app)'},
+       {k:'li', t:'<strong>Cliente</strong> · el modelo (Copilot, GPT, etc.)'},
+       {k:'li', t:'<strong>Servidor</strong> · cada herramienta lo expone'},
+       {k:'p', t:'Estándar, no propietario. Analogía: <em>USB-C de los modelos</em>.'}
+     ]
+   }},
+  {id:'s8', name:'08-what-is-not.md', folder:'02-context', icon:'md', label:'capacidades reales',
+   notes:'Capacidades reales por herramienta. <em>Jira</em>: lectura y escritura completas, sin Xray ni admin. <em>Confluence</em>: lectura y escritura de páginas y comentarios. <em>Figma</em>: solo lectura más generación, sin edición. <strong>El alcance importa más que la teoría.</strong>',
+   probs:[], trace:[], srcMode:true,
+   chat:{
+     user:'¿Qué puedo y qué no puedo hacer hoy con los MCP que tengo?',
+     reply:[
+       {k:'p', t:'Resumen por servidor:'},
+       {k:'li', t:'<strong>Jira</strong> · lectura y escritura completas (no Xray, no admin, no Bitbucket)'},
+       {k:'li', t:'<strong>Confluence</strong> · leer y escribir páginas + comentarios (no adjuntos, no permisos)'},
+       {k:'li', t:'<strong>Figma</strong> · solo lectura + Code Connect + generación (no editar diseños)'},
+       {k:'p', t:'<em>Saber esto bien evita el 90% del Q&amp;A confuso.</em>'}
+     ]
+   }},
+  {id:'s9', name:'09-mcp.json', folder:'02-context', icon:'json', label:'mi setup',
+   notes:'Mi montaje: VS Code + <em>copilot</em>, dos MCPs — Atlassian y Figma. OAuth corporativo: <em>el modelo solo ve lo que mi cuenta ve.</em>',
+   probs:[], trace:[], srcMode:false,
+   chat:{
+     user:'Ábreme el <code>mcp.json</code> de este proyecto',
+     reply:[
+       {k:'p', t:'Abriendo <code>.vscode/mcp.json</code>. Dos servidores activos:'},
+       {k:'li', t:'<strong>atlassian</strong> · URL remota + OAuth'},
+       {k:'li', t:'<strong>figma</strong> · NPX local'},
+       {k:'p', t:'OAuth corporativo: el modelo <em>solo ve lo que tu cuenta ve</em>.'},
+       {k:'src', t:'.vscode/mcp.json'}
+     ]
+   }},
+  {id:'s10', name:'10-jira.chat', folder:'03-cases', icon:'chat', label:'caso 1 · Jira',
+   notes:'Pego el link. El modelo lee descripción, AC, comentarios, adjuntos. <em>"¿qué ambigüedades ves en los AC?"</em> — os sorprendería lo que encuentra.',
+   probs:[], trace:[
+     {cls:'trace__call', t:'10:14:22', msg:'[atlassian-mcp] → getIssue("DEMO-123")'},
+     {cls:'trace__ok',   t:'10:14:22', msg:'[atlassian-mcp] ← 200 OK · 247ms · fields: summary, description, comments(8), attachments(2)'},
+     {cls:'trace__info', t:'10:14:23', msg:'[claude] context_tokens: 4.2k · generation: 1.1s'}
+   ], srcMode:false,
+   chat:{
+     user:'Lee <code>jira/DEMO-123</code> y dime qué ambigüedades ves en los AC',
+     reply:[
+       {k:'p', t:'<strong>DEMO-123</strong> · Cupón de fidelización en línea con promo'},
+       {k:'p', t:'Leído: descripción, 8 comentarios, 2 adjuntos. Tres ambigüedades:'},
+       {k:'li', t:'AC-2: no especifica orden (¿promo o descuento primero?)'},
+       {k:'li', t:'AC-4: dice "redondear al céntimo" sin regla concreta'},
+       {k:'li', t:'Sin AC para <strong>devolución posterior</strong> de la línea'},
+       {k:'src', t:'jira.example.com/browse/DEMO-123'}
+     ]
+   }},
+  {id:'s11', name:'11-tests.feature', folder:'03-cases', icon:'feature', label:'caso 2 · tests',
+   notes:'Con el proyecto abierto, el modelo ve Page Objects, hooks y steps. <em>Reviso siempre cuatro cosas:</em> selectores, aserciones, datos, cobertura. Nunca commit sin ejecutar en local.',
+   probs:[
+     {icon:'ℹ',msg:'Inlay: datos · revisar usuario seed (line 4)',src:'tests.feature:4'},
+     {icon:'⚠',msg:'Assert on line 7 may be too broad — consider checking specific value',src:'tests.feature:7'},
+     {icon:'ℹ',msg:'Inlay: Data isolation — verify test data scope (line 5)',src:'tests.feature:5'},
+     {icon:'ℹ',msg:'Inlay: cobertura — check AC-2 coverage (line 9)',src:'tests.feature:9'}
+   ], trace:[], srcMode:false,
+   chat:{
+     user:'Genera el <code>.feature</code> para DEMO-123 alineado con nuestro proyecto',
+     reply:[
+       {k:'p', t:'Analizado tu proyecto. Reusando:'},
+       {k:'li', t:'<code>BaseSteps.cs</code> (login, ticket setup)'},
+       {k:'li', t:'<code>CuponSteps.cs</code> (binding existente)'},
+       {k:'li', t:'Page Objects (AutomationId verificados)'},
+       {k:'p', t:'Borrador en el editor con <em>inlay hints</em> donde tengo dudas. <strong>Revísalo antes de commit.</strong>'},
+       {k:'src', t:'tests/features/cupon-fidelizacion.feature'}
+     ]
+   }},
+  {id:'s12', name:'12-confluence.chat', folder:'03-cases', icon:'chat', label:'caso 3 · Confluence',
+   notes:'No conozco una operativa, pregunto en lenguaje natural. El modelo busca en Confluence y <em>devuelve el link a la fuente.</em> Para entrar a un módulo nuevo, vale una semana de onboarding.',
+   probs:[], trace:[
+     {cls:'trace__call', t:'11:02:08', msg:'[atlassian-mcp] → searchConfluence("devoluciones con vale")'},
+     {cls:'trace__ok',   t:'11:02:09', msg:'[atlassian-mcp] ← 200 OK · 412ms · 2 pages · best match: guía de devoluciones'},
+     {cls:'trace__info', t:'11:02:09', msg:'[claude] context_tokens: 3.8k · source: wiki/guia-devoluciones'}
+   ], srcMode:false,
+   chat:{
+     user:'¿Cómo funcionan las devoluciones con vale en Tienda Demo?',
+     reply:[
+       {k:'p', t:'Encontré la doc. Resumen:'},
+       {k:'li', t:'Aplica cuando <strong>&gt; 15 días</strong> o sin justificante'},
+       {k:'li', t:'Vale electrónico, caducidad 6 meses'},
+       {k:'li', t:'La diferencia queda como saldo en el vale'},
+       {k:'li', t:'Requiere aprobación del encargado'},
+       {k:'src', t:'Tienda Demo · Guía de devoluciones (ejemplo ficticio)'}
+     ]
+   }},
+  {id:'s16', name:'13-generate-followup.sh', folder:'04-wrap', icon:'sh', label:'cierre · demo generativa',
+   notes:'<em>Aquí es donde la sala ve MCP escribir, no solo leer.</em> La Confluence se crea, la Epic de Jira se crea. El mensaje de Teams espera confirmación mía. <em>Supervisión humana siempre — ese cursor parpadeando en [Y/n] es el cierre perfecto.</em>',
+   probs:[], trace:[], srcMode:false,
+   chat:{
+     user:'<code>run generate-followup.sh</code>',
+     reply:[
+       {k:'p', t:'Ejecutando script en 3 pasos:'},
+       {k:'li', t:'<span class="ok">[1/3] ✓</span> Confluence — página <em>MCP Setup Guide</em> publicada'},
+       {k:'li', t:'<span class="ok">[2/3] ✓</span> Jira — Epic <strong>DEMO-200</strong> + 5 historias hijas'},
+       {k:'li', t:'<span class="wn">[3/3] …</span> Teams — esperando tu confirmación'},
+       {k:'p', t:'<strong>Acción humana requerida</strong>: <code>[Y/n]</code>'},
+       {k:'p', t:'<em>Supervisión siempre. Cierre del demo.</em>'}
+     ]
+   }}
+];
 
-function sleep(ms) {
-  const g = gen;
-  if (skipping) return g === gen ? Promise.resolve() : Promise.reject(ABORT);
-  return new Promise((resolve, reject) => {
-    const done = () => {
-      clearTimeout(t);
-      pendientes = pendientes.filter((f) => f !== done);
-      g === gen ? resolve() : reject(ABORT);
-    };
-    const t = setTimeout(done, ms);
-    pendientes.push(done);
+const FOLDERS=[
+  {key:'01-intro',   name:'01-intro'},
+  {key:'02-context', name:'02-context'},
+  {key:'03-cases',   name:'03-cases'},
+  {key:'04-wrap',    name:'04-wrap'}
+];
+
+/* ─────────────────── STATE ─────────────────── */
+let idx = 0;
+let recentTabs = [];
+let panelOn = false;
+let currentPanelTab = 'notes';
+let sourceMap = {};  // fileId → true = source mode
+let streamed = new Set();
+let closingPlayed = false;
+
+/* chat state */
+let chatOn = true;             // panel visibility
+let chatPlayed = new Set();    // file IDs whose chat has played
+let chatHistory = [];          // [{fileId, role, html, k?, src?}] for replay
+let chatTimers = [];           // active animation timeouts (cancellable)
+let chatBusy = false;          // suppress nav-triggered animations mid-stream
+let chatAbort = 0;             // token: bumped on every clearChatTimers() to invalidate in-flight loops
+let chatAnimatingId = null;    // id of slide whose chat is currently animating (so we can unmark on abort)
+const TYPE_SPEED = 28;         // ms/char
+
+/* ─────────────────── BUILD SIDEBAR ─────────────────── */
+function iconSpan(icon, cls){
+  const labels={md:'M',json:'{}',feature:'F',chat:'~',log:'L',sh:'$'};
+  return `<span class="${cls} ${cls}-${icon}">${labels[icon]||'·'}</span>`;
+}
+const treeEl = document.getElementById('tree');
+FOLDERS.forEach(f => {
+  const d=document.createElement('div');
+  d.className='tree__folder';
+  d.innerHTML=`<span class="tree__folder__arrow"></span><span class="tree__folder__icon"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M14.5 3h-5.79l-2-2H1.5l-.5.5v11l.5.5h13l.5-.5v-9l-.5-.5z"/></svg></span><span>${f.name}</span>`;
+  treeEl.appendChild(d);
+  FILES.filter(fi=>fi.folder===f.key).forEach(fi=>{
+    const el=document.createElement('div');
+    el.className='tree__file'; el.dataset.fileId=fi.id;
+    el.innerHTML=`${iconSpan(fi.icon,'fi')}<span>${fi.name}</span>`;
+    el.onclick=()=>goTo(FILES.findIndex(x=>x.id===fi.id));
+    treeEl.appendChild(el);
+  });
+});
+
+/* ─────────────────── NAVIGATION ─────────────────── */
+function goTo(i){
+  i=Math.max(0,Math.min(FILES.length-1,i));
+  idx=i;
+  const f=FILES[i];
+
+  document.querySelectorAll('.file').forEach(el=>el.classList.remove('is-current'));
+  const art=document.querySelector(`.file[data-file-id="${f.id}"]`);
+  art.classList.add('is-current');
+
+  // apply source mode
+  if(sourceMap[f.id]){art.classList.add('src-mode');}
+  else{art.classList.remove('src-mode');}
+
+  // sidebar
+  document.querySelectorAll('.tree__file').forEach(el=>el.classList.toggle('is-active',el.dataset.fileId===f.id));
+
+  // tabs (keep last 3)
+  recentTabs=[f,...recentTabs.filter(t=>t.id!==f.id)].slice(0,3);
+  renderTabs();
+
+  // breadcrumb
+  document.getElementById('crumbFolder').textContent=f.folder;
+  document.getElementById('crumbFile').textContent=f.name;
+  const srcBtn=document.getElementById('srcBtn');
+  srcBtn.className='breadcrumb__srcbtn'+(f.srcMode?' is-md':'')+(sourceMap[f.id]?' is-source-on':'');
+  srcBtn.textContent=sourceMap[f.id]?'⎇ Preview':'<> Source';
+
+  // status bar
+  document.getElementById('sbSection').textContent=String(i+1).padStart(2,'0')+'/13 · '+f.label;
+  document.getElementById('sbFile').textContent=f.name;
+
+  // presenter HUD
+  document.getElementById('hudNum').textContent=String(i+1).padStart(2,'0');
+  document.getElementById('hudLabel').textContent=f.label;
+  const nextF=FILES[i+1];
+  document.getElementById('hudNext').textContent=nextF ? nextF.name : '— fin —';
+  document.getElementById('hudNotes').innerHTML=f.notes||'';
+
+  // problems badge
+  const pCount=f.probs.length;
+  const wCount=f.probs.filter(p=>p.icon==='⚠').length;
+  document.getElementById('sbErrors').textContent=0;
+  document.getElementById('sbWarnings').textContent=wCount;
+  const pb=document.getElementById('probBadge');
+  pb.textContent=pCount?` (${pCount})`:'';
+
+  // source control badge
+  document.getElementById('scBadge').textContent=f.id==='s11'?'3':'2';
+
+  // panel content
+  document.getElementById('pFilename').textContent=f.name+'.notes';
+  document.getElementById('pNotes').innerHTML=f.notes;
+  renderProblems(f);
+  renderTrace(f);
+
+  // panel content always updates; tab stays wherever the user left it
+
+  // scroll to top
+  document.getElementById('body').scrollTop=0;
+
+  // stream (reset only — actual trigger happens after chat reveals slide)
+  if(art.dataset.stream) resetStreamIn(art);
+
+  // closing terminal — defer until reveal
+  // (handled inside revealSlide via callback below)
+
+  // chat panel — drives reveal & editor stream timing
+  renderChatForFile(f, art);
+
+  // hash
+  if(history.replaceState) history.replaceState(null,'','#'+f.id);
+}
+
+/* ─────────────────── TABS ─────────────────── */
+function renderTabs(){
+  const tabsEl=document.getElementById('tabs');
+  tabsEl.innerHTML='';
+  [...recentTabs].reverse().forEach(f=>{
+    const isA=f.id===FILES[idx].id;
+    const t=document.createElement('div');
+    t.className='tab'+(isA?' is-active':'');
+    t.innerHTML=`${iconSpan(f.icon,'ti')}<span>${f.name}</span><span class="tab__close"></span>`;
+    t.onclick=()=>goTo(FILES.findIndex(x=>x.id===f.id));
+    tabsEl.appendChild(t);
   });
 }
 
-function adelantar() {          // termina ya la animación en curso
-  skipping = true;
-  pendientes.slice().forEach((f) => f());
+/* ─────────────────── SOURCE TOGGLE ─────────────────── */
+function toggleSource(){
+  const f=FILES[idx];
+  if(!f.srcMode) return;
+  sourceMap[f.id]=!sourceMap[f.id];
+  const art=document.querySelector(`.file[data-file-id="${f.id}"]`);
+  art.classList.toggle('src-mode',!!sourceMap[f.id]);
+  const btn=document.getElementById('srcBtn');
+  btn.className='breadcrumb__srcbtn is-md'+(sourceMap[f.id]?' is-source-on':'');
+  btn.textContent=sourceMap[f.id]?'⎇ Preview':'<> Source';
+  showToast(sourceMap[f.id]?'Source view':'Preview');
 }
 
-/* ============================================================
-   2. Piezas de la terminal
-   ============================================================ */
-const $ = (id) => document.getElementById(id);
-const transcript = $("transcript");
-const esc = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-
-function add(cls, html) {
-  const e = document.createElement("div");
-  e.className = cls;
-  e.innerHTML = html;
-  transcript.appendChild(e);
-  return e;
+/* ─────────────────── PANEL TABS ─────────────────── */
+function switchPanelTab(tab){
+  currentPanelTab=tab;
+  document.querySelectorAll('.panel__tab').forEach(el=>{
+    el.classList.toggle('is-active',el.dataset.ptab===tab);
+  });
+  document.querySelectorAll('.panel__section').forEach(el=>el.classList.remove('is-active'));
+  document.getElementById('ps-'+tab).classList.add('is-active');
 }
 
-// Los prompts que empiezan por "!" son comandos de terminal (modo bash de Claude Code)
-async function escribirPrompt(texto, velocidad = 32) {
-  const el = $("inputText");
-  const bash = texto.startsWith("!");
-  const visible = bash ? texto.slice(1).trimStart() : texto;
-  $("input").classList.toggle("bash", bash);
-  el.textContent = "";
-  if (skipping) { el.textContent = visible; return; }
-  for (const ch of visible) {
-    el.textContent += ch;
-    await sleep(velocidad + Math.random() * 25);
+function renderProblems(f){
+  const el=document.getElementById('probContent');
+  if(!f.probs.length){el.innerHTML='<div class="prob__empty">No problems detected.</div>';return;}
+  el.innerHTML=f.probs.map(p=>`
+    <div class="prob__item">
+      <span class="prob__icon">${p.icon}</span>
+      <div><div class="prob__msg">${p.msg}</div><div class="prob__src">${p.src}</div></div>
+    </div>`).join('');
+}
+
+let traceTimers=[];
+function renderTrace(f){
+  clearTimeout(...traceTimers); traceTimers=[];
+  const el=document.getElementById('traceContent');
+  if(!f.trace.length){
+    el.innerHTML='<span class="trace__empty">No MCP calls for this file.</span>';return;
   }
-  await sleep(450);
+  el.innerHTML='';
+  f.trace.forEach((line,i)=>{
+    const d=document.createElement('div');
+    d.className='trace__line';
+    d.innerHTML=`<span class="trace__ts">${line.t}</span> <span class="${line.cls}">${line.msg}</span>`;
+    el.appendChild(d);
+    const t=setTimeout(()=>d.classList.add('is-visible'),(i+1)*350);
+    traceTimers.push(t);
+  });
 }
 
-async function enviar() {
-  const texto = $("inputText").textContent;
-  const bash = $("input").classList.contains("bash");
-  $("inputText").textContent = "";
-  $("input").classList.remove("bash");
-  add(bash ? "msg-user bash" : "msg-user", `${bash ? "!" : "&gt;"} <span class="t">${esc(texto)}</span>`);
-  await sleep(350);
+/* ─────────────────── STREAM ─────────────────── */
+function triggerStream(target){
+  const id=target.closest('.file').dataset.stream||'x';
+  if(streamed.has(id))return;
+  streamed.add(id);
+  const dots=target.querySelector('[data-typing]');
+  const lines=target.querySelectorAll('[data-stream-line]');
+  setTimeout(()=>{
+    if(dots)dots.style.display='none';
+    lines.forEach((el,i)=>setTimeout(()=>{el.classList.remove('sh');el.classList.add('ss');},i*220));
+  },700);
+}
+function resetStreamIn(file){
+  const id=file.dataset.stream; if(!id)return;
+  streamed.delete(id);
+  const tgt=file.querySelector('[data-stream-target]'); if(!tgt)return;
+  tgt.querySelectorAll('[data-stream-line]').forEach(l=>{l.classList.add('sh');l.classList.remove('ss');});
+  const dots=tgt.querySelector('[data-typing]'); if(dots)dots.style.display='';
+}
+function replayStream(){
+  const fId=FILES[idx].id;
+  const art=document.querySelector(`.file[data-file-id="${fId}"]`);
+  // Replay = "regenerate from here". Remove all bubbles belonging to this
+  // slide AND any later slides; clear their played-state too. This keeps
+  // the cumulative chat strictly in slide order.
+  const fIdx=FILES.indexOf(FILES[idx]);
+  const toClear=new Set(FILES.slice(fIdx).map(x=>x.id));
+  const m=document.getElementById('cpMessages');
+  m.querySelectorAll('.cp__msg').forEach(b=>{
+    if(toClear.has(b.dataset.fileId)) b.remove();
+  });
+  toClear.forEach(id=>chatPlayed.delete(id));
+  renderChatForFile(FILES[idx], art);
+  showToast('▶ Replay');
 }
 
-const FRAMES = ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
-async function pensar(ms, etiqueta = "Pensando…") {
-  const e = add("spinner", "");
-  const inicio = Date.now();
-  let i = 0;
-  try {
-    while (!skipping && Date.now() - inicio < ms) {
-      const seg = Math.floor((Date.now() - inicio) / 1000);
-      e.innerHTML = `${FRAMES[i++ % FRAMES.length]} ${etiqueta} <span class="muted">(${seg}s · esc to interrupt)</span>`;
-      await sleep(110);
+/* ─────────────────── CLOSING TERMINAL ─────────────────── */
+function playClosingTerminal(){
+  closingPlayed=true;
+  const delays=[0,300,700,1000,1200,1500,1900,2200,2500,2800,3100,3500,3800,4100,4500,4900,5400];
+  for(let i=0;i<=16;i++){
+    const d=delays[i]||5400;
+    setTimeout(()=>{
+      const el=document.getElementById('ct'+i);
+      if(el){el.classList.add('is-vis');}
+    },d);
+  }
+  setTimeout(()=>{
+    document.getElementById('ctermThanks').classList.add('is-vis');
+  },6500);
+}
+function replayClosing(){
+  closingPlayed=false;
+  for(let i=0;i<=16;i++){
+    const el=document.getElementById('ct'+i);
+    if(el) el.classList.remove('is-vis');
+  }
+  document.getElementById('ctermThanks').classList.remove('is-vis');
+  setTimeout(playClosingTerminal,200);
+}
+
+/* ─────────────────── SIDEBAR VIEWS ─────────────────── */
+function switchSidebar(view){
+  // toggle the sidebar__view elements
+  const exp=document.getElementById('sbExplorer');
+  const ext=document.getElementById('sbExtensions');
+  exp.classList.toggle('is-active', view==='explorer');
+  ext.classList.toggle('is-active', view==='extensions');
+  // toggle the activity bar active indicator
+  document.getElementById('actExplorer').classList.toggle('actbar__icon--active', view==='explorer');
+  document.getElementById('actExtensions').classList.toggle('actbar__icon--active', view==='extensions');
+}
+
+/* ─────────────────── CHAT PANEL ─────────────────── */
+function toggleChat(){
+  chatOn=!chatOn;
+  document.getElementById('ide').classList.toggle('no-chat',!chatOn);
+  document.getElementById('actChat').classList.toggle('actbar__icon--active',chatOn);
+  showToast(chatOn?'Chat panel · visible':'Chat panel · oculto');
+}
+
+function clearChatTimers(){
+  chatTimers.forEach(t=>clearTimeout(t));
+  chatTimers=[];
+  chatAbort++; // invalidate any in-flight typewriter/streamReply iterations
+  // If we were mid-animation on a slide, that slide's chat is now incomplete
+  // (its half-typed bubbles get removed by the abort handlers). Unmark it
+  // so revisiting will re-animate fresh instead of being treated as "played".
+  if(chatAnimatingId){
+    chatPlayed.delete(chatAnimatingId);
+    chatAnimatingId=null;
+  }
+}
+
+function renderChatEmpty(msg){
+  document.getElementById('cpMessages').innerHTML=`
+    <div class="cp__empty">
+      <div class="cp__empty__dot"></div>
+      ${msg||'// chat awaiting context'}
+    </div>`;
+}
+
+function setChatPlaceholder(html){
+  document.getElementById('cpPlaceholder').innerHTML=html||'<em>// type a message or pick a file...</em>';
+}
+
+function scrollChat(){
+  const m=document.getElementById('cpMessages');
+  m.scrollTop=m.scrollHeight;
+}
+
+/* Build a static bubble (used for replay / instant render) */
+function appendBubble(role, contentHTML, metaTime, animate, fileId){
+  const m=document.getElementById('cpMessages');
+  // remove empty placeholder if present (first real message)
+  const empty=m.querySelector('.cp__empty');
+  if(empty) empty.remove();
+  const msg=document.createElement('div');
+  msg.className='cp__msg cp__msg--'+(role==='user'?'u':'c');
+  if(fileId) msg.dataset.fileId=fileId;
+  if(!animate) msg.style.animation='none';
+  const lbl=role==='user'?'Yo':'Copilot';
+  msg.innerHTML=`
+    <div class="cp__role">
+      <span class="cp__role__dot"></span>${lbl}
+      <span class="cp__role__meta">${metaTime||''}</span>
+    </div>
+    <div class="cp__bubble">${contentHTML}</div>`;
+  m.appendChild(msg);
+  scrollChat();
+  return msg;
+}
+
+function nowHM(){
+  const d=new Date();
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+
+/* Convert a chat.reply parts array to HTML */
+function replyToHTML(parts){
+  let out='';
+  let inList=false;
+  parts.forEach(p=>{
+    if(p.k==='li'){
+      if(!inList){out+='<ul>';inList=true;}
+      out+=`<li>${p.t}</li>`;
+    } else {
+      if(inList){out+='</ul>';inList=false;}
+      if(p.k==='p') out+=`<div>${p.t}</div>`;
+      else if(p.k==='src') out+=`<div class="cp__src"><span class="cp__src__txt">${p.t}</span></div>`;
     }
-  } finally {
-    e.remove();
-  }
+  });
+  if(inList) out+='</ul>';
+  return out;
 }
 
-// Respuesta de Claude: las líneas aparecen una a una
-async function dice(lineas) {
-  const e = add("msg", `<span class="dot dot--w">●</span>`);
-  for (let i = 0; i < lineas.length; i++) {
-    e.innerHTML += (i ? "\n" : "") + lineas[i];
-    await sleep(380);
-  }
-  await sleep(300);
-}
-
-// Llamada a una herramienta MCP: ● servidor - herramienta (MCP)(argumentos)
-async function mcp(servidor, herramienta, args, resultado) {
-  add("msg tool", `<span class="dot dot--ok">●</span><b>${servidor} - ${herramienta}</b> <span class="mcp">(MCP)</span><span class="arg">(${esc(args)})</span>`);
-  await pensar(900, "Llamando a " + servidor + "…");
-  add("result", `⎿  ${resultado}`);
-  await sleep(500);
-}
-
-// Herramienta normal de Claude Code (Write, Bash…) con bloque de código opcional
-async function herramienta(nombre, arg, resultado, lineas = null) {
-  add("msg tool", `<span class="dot dot--ok">●</span><b>${nombre}</b><span class="arg">(${esc(arg)})</span>`);
-  await sleep(400);
-  if (lineas) {
-    const bloque = add("code", "");
-    for (const [num, html] of lineas) {
-      const d = document.createElement("div");
-      d.className = "add";
-      d.innerHTML = `<span class="ln">${num}</span>+ ${html}`;
-      bloque.appendChild(d);
-      await sleep(90);
+/* Typewriter for user message */
+function typewriter(el, text, done){
+  let i=0;
+  el.innerHTML='';
+  const caret=document.createElement('span');
+  caret.className='cp__caret';
+  el.appendChild(caret);
+  const myToken=chatAbort;
+  // Remember the bubble element so we can drop it if aborted mid-type.
+  const bubbleMsg=el.closest('.cp__msg');
+  function step(){
+    if(myToken!==chatAbort){
+      // Aborted (user navigated away). Remove the half-typed bubble.
+      if(bubbleMsg && bubbleMsg.parentNode) bubbleMsg.remove();
+      return;
     }
-  }
-  add("result", `⎿  ${resultado}`);
-  await sleep(600);
-}
-
-async function caja(titulo, filas, clase = "") {
-  add(`box ${clase}`, `<div class="box__title">${titulo}</div>${filas.join("\n")}`);
-  await sleep(700);
-}
-
-function pie(html) { $("footer").innerHTML = html; }
-const PIE_INICIAL = "? for shortcuts";
-const PIE_MCP = `? for shortcuts · <span class="mcp-on">● 2 MCP servers</span>`;
-
-/* ============================================================
-   3. El guion
-   ============================================================ */
-const PREGUNTA = "¿Cómo funcionan las devoluciones con vale en Tienda Demo?";
-
-const FEATURE = [
-  [1, `<span class="kw">Feature:</span> Cupón de fidelización sobre línea con promo`],
-  [2, ""],
-  [3, `  <span class="kw">Scenario:</span> Aplicar cupón del 10% sobre artículo en 2x1`],
-  [4, `    <span class="kw">Given</span> el cliente tiene el cupón "FIDELIDAD10"`],
-  [5, `    <span class="kw">And</span> el ticket contiene "Camiseta demo" con promo "2x1"`],
-  [6, `    <span class="kw">When</span> aplica el cupón del 10%`],
-  [7, `    <span class="kw">Then</span> el subtotal refleja ambos descuentos`],
-  [8, `    <span class="kw">And</span> la devolución posterior recalcula correctamente`],
-];
-
-const SCENES = [
-  {
-    step: "Charla · IA aplicada a QA",
-    title: "Cómo trabajo con <em>MCP</em> en QA",
-    body: `<p>Diez minutos sobre conectar la IA al contexto real del proyecto: <b>Jira, Confluence y Figma</b>.</p>
-           <p>Todo lo que vais a ver pasa en la terminal, con Claude Code.</p>
-           <p class="note">Joan · QA Tester<br><span class="g">Datos de ejemplo: Tienda Demo (ficticia).</span></p>`,
-    notes: "Buenas. Cómo trabajo con MCP en QA. Diez minutos, tres herramientas: Jira, Confluence y Figma.",
-    beats: [async () => {
-      pie(PIE_INICIAL);
-      add("welcome", `<b>✻</b> Welcome to <b>Claude Code</b>!\n\n<span class="muted">  /help for help, /status for your current setup\n\n  cwd: C:/Users/joan/proyectos/tienda-demo</span>`);
-      await sleep(300);
-    }],
-  },
-  {
-    step: "Pregunta a la sala",
-    title: "Antes de empezar…",
-    body: `<div class="hand">✋</div>
-           <p class="quote">¿Quién usa <em>MCP</em> a diario?</p>
-           <p class="quote">¿Y quién lo tiene conectado a <em>Jira o Confluence</em>?</p>`,
-    notes: "Pausa real: espera a que levanten la mano. Si nadie, el resto se entiende mejor; si muchos, ve más rápido.",
-    beats: [async () => { await sleep(200); }],
-  },
-  {
-    step: "01 · Anti-demo",
-    title: "La misma pregunta. <em>Sin contexto.</em>",
-    body: `<p>Le pregunto por una regla de negocio de mi proyecto.</p>
-           <p>El modelo es listo, pero <b>no ha visto nunca nuestra documentación</b>. Lo único que puede hacer es pedirme más información.</p>
-           <p class="note">Sin MCP, el modelo está ciego. Y yo acabo copiando y pegando.</p>`,
-    notes: "Fijaos en la respuesta: pide un contexto que nosotros ya tenemos. Inteligente pero ciego.",
-    beats: [async () => {
-      await escribirPrompt(PREGUNTA);
-      await enviar();
-      await pensar(1400);
-      await dice([
-        "Para responder con precisión necesitaría más contexto:",
-        "  · ¿Cuál es la política de devoluciones de la tienda?",
-        "  · ¿Los vales son físicos o electrónicos? ¿Caducan?",
-        "  · ¿Puedes compartir la documentación interna?",
-        `<span class="g">Sin acceso a la documentación de Tienda Demo, no puedo darte una respuesta específica.</span>`,
-      ]);
-    }],
-  },
-  {
-    step: "02 · Qué es MCP",
-    title: "El <em>USB-C</em> de los modelos",
-    body: `<p><b>Model Context Protocol</b>: un estándar abierto para conectar cualquier IA con tus herramientas.</p>
-           <div class="flow"><div class="you">Host<small>Claude Code</small></div><span>⇄</span><div>Cliente MCP<small>dentro del host</small></div><span>⇄</span><div>Servidor MCP<small>Atlassian · Figma</small></div></div>
-           <p>Cada servidor expone <code>tools</code> (acciones), <code>resources</code> (datos) y <code>prompts</code> (plantillas).</p>
-           <p class="note">El host puede ser Claude Code, VS Code con Copilot… El protocolo es el mismo.</p>`,
-    notes: "Tres piezas: host, cliente y servidor. Añadir un servidor es una línea. Atlassian lo publica en remoto; Figma se arranca en local con npx.",
-    beats: [
-      async () => {
-        await escribirPrompt("/mcp");
-        await enviar();
-        await caja("Manage MCP servers", [`<span class="g">No MCP servers configured.</span>`]);
-      },
-      async () => {
-        await escribirPrompt("! claude mcp add --transport sse atlassian https://mcp.atlassian.com/v1/sse");
-        await enviar();
-        add("result", "⎿  Added SSE MCP server atlassian with URL: https://mcp.atlassian.com/v1/sse");
-        await sleep(500);
-        await escribirPrompt("! claude mcp add figma -- npx -y figma-mcp-server");
-        await enviar();
-        add("result", "⎿  Added stdio MCP server figma with command: npx -y figma-mcp-server");
-        await sleep(500);
-      },
-    ],
-  },
-  {
-    step: "03 · Mi setup",
-    title: "Conectado, <em>con mis permisos</em>",
-    body: `<ul><li><b>Atlassian</b>: Jira + Confluence.</li><li><b>Figma</b>: los diseños de la app.</li></ul>
-           <p>La autenticación es <b>OAuth</b>: inicio sesión con mi cuenta.</p>
-           <p class="note">El modelo <b>solo ve lo que mi cuenta ya puede ver</b>. No hay accesos nuevos.</p>`,
-    notes: "OAuth es la clave para que esto sea aceptable en una empresa: el modelo respeta los permisos de tu cuenta.",
-    beats: [async () => {
-      await escribirPrompt("/mcp");
-      await enviar();
-      await caja("Manage MCP servers", [
-        `<span class="opt sel">❯</span> atlassian  <span class="ve">✔ connected</span>  <span class="g">· OAuth</span>`,
-        `  figma      <span class="ve">✔ connected</span>`,
-      ]);
-      pie(PIE_MCP);
-    }],
-  },
-  {
-    step: "04 · Anti-demo",
-    title: "La misma pregunta. <em>Con contexto.</em>",
-    body: `<p>Mismo modelo, misma pregunta. Ahora Claude <b>busca en Confluence</b> antes de responder.</p>
-           <p>Y me devuelve <b>el enlace a la fuente</b>, para que pueda comprobarlo.</p>
-           <p class="quote">El modelo no se ha vuelto más listo. <em>Ahora ve dónde trabajo.</em></p>`,
-    notes: "Mismo modelo, misma pregunta. Señala la llamada MCP y la fuente al final. Todo es un ejemplo ficticio.",
-    beats: [async () => {
-      await escribirPrompt(PREGUNTA);
-      await enviar();
-      await pensar(900);
-      await mcp("atlassian", "searchConfluenceUsingCql", "cql: \"text ~ 'devoluciones vale'\"", "Found 3 pages");
-      await dice([
-        "He encontrado <b>Guía de devoluciones</b> (ejemplo ficticio). Resumen:",
-        "  · Aplica cuando el ticket original tiene más de 15 días",
-        "  · Genera un vale electrónico con caducidad de 6 meses",
-        "  · La diferencia queda como saldo en el vale",
-        "  · Requiere aprobación del encargado",
-        `<span class="src">Fuente: wiki.example.com/spaces/TD/guia-devoluciones</span>`,
-      ]);
-    }],
-  },
-  {
-    step: "05 · Caso 1 · Jira",
-    title: "Jira como <em>contexto vivo</em>",
-    body: `<p>Le paso la clave de la historia. Claude lee la descripción, los criterios de aceptación y los comentarios.</p>
-           <p class="note"><b>No copio nada.</b> Y le pido lo que más tiempo me ahorra: <b>las ambigüedades</b> antes de probar.</p>`,
-    notes: "Os sorprendería lo que encuentra en los criterios de aceptación. Esto antes me llevaba una lectura atenta de la historia y sus comentarios.",
-    beats: [async () => {
-      await escribirPrompt("Resúmeme DEMO-123 y dime qué ambigüedades ves en los AC");
-      await enviar();
-      await mcp("atlassian", "getJiraIssue", 'issueIdOrKey: "DEMO-123"', "DEMO-123 · 8 comments · In Progress");
-      await dice([
-        "<b>DEMO-123 · Cupón de fidelización en línea con promo activa</b>",
-        "Aplica un cupón del 10% sobre líneas que ya tienen promoción. Ambigüedades:",
-        "  1. AC-2 no dice el orden: ¿promo o cupón primero?",
-        "  2. AC-4 dice «redondear al céntimo» sin regla concreta",
-        "  3. No hay AC para la devolución posterior de la línea",
-      ]);
-    }],
-  },
-  {
-    step: "06 · Caso 2 · Tests",
-    title: "De la historia <em>al .feature</em>",
-    body: `<p>Con la historia y el proyecto abiertos, Claude genera un borrador de escenario que sigue nuestros pasos existentes.</p>
-           <p><b>Lo reviso siempre:</b></p>
-           <ul class="checks"><li>Selectores</li><li>Aserciones (¿demasiado laxas?)</li><li>Datos de prueba</li><li>Cobertura: ¿cubre de verdad los AC?</li></ul>
-           <p class="note">Nunca hago commit sin ejecutarlo en local.</p>`,
-    notes: "Es un borrador, no un test terminado. Las cuatro revisiones son lo importante de esta escena.",
-    beats: [async () => {
-      await escribirPrompt("Genera el .feature para DEMO-123");
-      await enviar();
-      await pensar(1200);
-      await herramienta("Write", "tests/features/cupon-fidelizacion.feature", "Wrote 8 lines to tests/features/cupon-fidelizacion.feature", FEATURE);
-      await dice(["Borrador listo. Dudas marcadas: el orden de aplicación (AC-2) y la regla de redondeo (AC-4). <b>Revísalo antes de hacer commit.</b>"]);
-    }],
-  },
-  {
-    step: "07 · Capacidades reales",
-    title: "Lo que <em>puedo</em> y lo que <em>no</em>",
-    body: `<div class="caps">
-             <div><b>Jira</b><br><span class="si">✓</span> leer, crear y editar issues, comentar, cambiar estado<br><span class="no">✕</span> tests de Xray, adjuntos, administración</div>
-             <div><b>Confluence</b><br><span class="si">✓</span> buscar, leer, crear y actualizar páginas<br><span class="no">✕</span> adjuntos, permisos</div>
-             <div><b>Figma</b><br><span class="si">✓</span> leer componentes, capturas y variables<br><span class="no">✕</span> editar diseños existentes</div>
-           </div>
-           <p style="margin-top:1rem">El alcance importa más que la teoría.</p>`,
-    notes: "Saber esto bien evita la mitad de las preguntas confusas. Lectura va de sobra; escritura, con matices; administración, casi nada.",
-    beats: [async () => {
-      await escribirPrompt("¿Qué puedes hacer y qué no con estos MCP?");
-      await enviar();
-      await pensar(1000);
-      await dice([
-        "Resumen por servidor:",
-        `  · <b>Jira</b>: lectura y escritura de issues <span class="g">(sin Xray ni administración)</span>`,
-        `  · <b>Confluence</b>: leer y escribir páginas <span class="g">(sin adjuntos ni permisos)</span>`,
-        `  · <b>Figma</b>: lectura y generación <span class="g">(no edita diseños)</span>`,
-      ]);
-    }],
-  },
-  {
-    step: "Cierre",
-    title: "MCP también <em>escribe</em>",
-    body: `<p>Le pido que deje la guía en Confluence y los próximos pasos en Jira.</p>
-           <p class="note"><b>Supervisión humana siempre:</b> Claude pide permiso antes de cada acción que cambia algo.</p>
-           <p>Charla y presentación: <code style="font-size:1.2rem">iatalks.pages.dev</code></p>
-           <p><b>¿Preguntas?</b></p>`,
-    notes: "Aquí la sala ve MCP escribir, no solo leer. La página se crea; la epic espera mi confirmación. Ese cursor esperando es el cierre.",
-    beats: [async () => {
-      await escribirPrompt("Crea en Confluence una guía de MCP para QA y una epic en Jira con los próximos pasos");
-      await enviar();
-      await mcp("atlassian", "createConfluencePage", 'spaceKey: "QA", title: "Guía de MCP para QA"', `Created page → <span class="src">wiki.example.com/spaces/QA/guia-mcp</span>`);
-      await caja("Tool use", [
-        `atlassian - createJiraIssue <span class="g">(MCP)</span>`,
-        `<span class="g">projectKey: "DEMO", issueType: "Epic", summary: "Próximos pasos MCP"</span>`,
-        "",
-        "Do you want to proceed?",
-        `<span class="opt sel">❯ 1. Yes</span>`,
-        "  2. No, and tell Claude what to do differently",
-      ], "box--perm");
-    }],
-  },
-];
-
-/* ============================================================
-   4. Navegación
-   ============================================================ */
-let escena = 0, paso = 0, ocupado = false;
-
-function pintarGuia() {
-  const s = SCENES[escena];
-  const c = $("guideContent");
-  c.innerHTML = `<div class="guide__step">${s.step}</div><h2>${s.title}</h2><div class="guide__body">${s.body}</div>`;
-  c.classList.remove("guide__enter"); void c.offsetWidth; c.classList.add("guide__enter");
-  $("notesText").textContent = s.notes;
-  $("dots").innerHTML = SCENES.map((_, i) => `<i class="${i === escena ? "on" : i < escena ? "done" : ""}"></i>`).join("");
-  history.replaceState(null, "", "#" + (escena + 1)); // no llena el historial
-}
-
-function pintarPista() {
-  const h = $("nextHint");
-  const fin = escena === SCENES.length - 1 && paso >= SCENES[escena].beats.length;
-  h.textContent = ocupado ? "● animando… (→ para terminar)" : fin ? "fin" : "→ siguiente";
-  h.classList.toggle("wait", ocupado);
-}
-
-async function ejecutar(beat) {
-  ocupado = true; pintarPista();
-  try { await beat(); }
-  catch (e) { if (e !== ABORT) throw e; }
-  finally { ocupado = false; pintarPista(); }
-}
-
-async function siguiente() {
-  if (ocupado) { adelantar(); return; }
-  if (paso >= SCENES[escena].beats.length) {
-    if (escena === SCENES.length - 1) return;
-    escena++; paso = 0; pintarGuia();
-  }
-  skipping = false;
-  await ejecutar(SCENES[escena].beats[paso++]);
-}
-
-// Reconstruye la terminal hasta el final de la escena `n`, sin animaciones
-async function irA(n) {
-  gen++;
-  pendientes.slice().forEach((f) => f());
-  transcript.innerHTML = ""; $("inputText").textContent = ""; $("input").classList.remove("bash");
-  skipping = true;
-  for (let i = 0; i <= n; i++) {
-    for (const beat of SCENES[i].beats) {
-      try { await beat(); } catch (e) { if (e !== ABORT) throw e; }
+    if(i>=text.length){
+      caret.remove();
+      el.innerHTML=text;
+      done&&done();
+      return;
     }
+    // Advance atomically over whole HTML tags and entities so the
+    // browser never sees a half-finished construct like "&aacut".
+    if(text[i]==='<'){
+      const close=text.indexOf('>',i);
+      i = close>=0 ? close+1 : i+1;
+    } else if(text[i]==='&'){
+      const semi=text.indexOf(';',i);
+      // entity reference is normally <=10 chars; if no ; nearby it's a bare &
+      i = (semi>=0 && semi-i<=10) ? semi+1 : i+1;
+    } else { i++; }
+    const partial=text.slice(0,i);
+    el.innerHTML=partial+'<span class="cp__caret"></span>';
+    const t=setTimeout(step,TYPE_SPEED);
+    chatTimers.push(t);
   }
-  skipping = false;
-  escena = n; paso = SCENES[n].beats.length; ocupado = false;
-  pintarGuia(); pintarPista();
+  step();
 }
 
-async function repetir() {
-  // Vuelve al final de la escena anterior y reproduce esta con animación
-  const n = escena;
-  if (n === 0) return;
-  await irA(n - 1);
-  escena = n; paso = 0; pintarGuia();
-  await siguiente();
+/* Stream Claude reply: parts appear sequentially */
+function streamReply(bubbleEl, parts, done){
+  // start with dots
+  bubbleEl.innerHTML='<div class="cp__dots"><span></span><span></span><span></span></div>';
+  let i=0;
+  const acc=[];
+  const myToken=chatAbort;
+  const bubbleMsg=bubbleEl.closest('.cp__msg');
+  function next(){
+    if(myToken!==chatAbort){
+      // Aborted — drop the partial claude bubble.
+      if(bubbleMsg && bubbleMsg.parentNode) bubbleMsg.remove();
+      return;
+    }
+    if(i>=parts.length){done&&done();return;}
+    acc.push(parts[i]);
+    bubbleEl.innerHTML=replyToHTML(acc);
+    scrollChat();
+    i++;
+    const delay = parts[i-1].k==='li' ? 280 : parts[i-1].k==='src' ? 340 : 380;
+    const t=setTimeout(next,delay);
+    chatTimers.push(t);
+  }
+  const t0=setTimeout(next,700); // initial typing dots
+  chatTimers.push(t0);
 }
 
-document.addEventListener("keydown", (e) => {
-  const k = e.key.toLowerCase();
-  if (["arrowright", "pagedown", " "].includes(k)) { e.preventDefault(); siguiente(); }
-  else if (["arrowleft", "pageup"].includes(k)) { e.preventDefault(); if (escena > 0) irA(escena - 1); }
-  else if (k === "home") irA(0);
-  else if (k === "end") irA(SCENES.length - 1);
-  else if (k === "r") repetir();
-  else if (k === "n") $("notes").hidden = !$("notes").hidden;
-  else if (k === "f") document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+/* Render chat for current file.
+   - The chat panel is a cumulative log: nothing is ever removed.
+   - On FIRST visit to a slide: hide the editor content, animate the
+     chat (typewriter user → claude reply stream), then reveal the editor
+     and trigger any editor-level stream/closing-terminal effects.
+   - On a revisit: chat is already there, just reveal the editor.
+   - If user jumps ahead skipping slides, backfill the skipped chats
+     instantly so the cumulative log stays in narrative order.
+*/
+function renderChatForFile(f, art){
+  clearChatTimers();
+  chatBusy=false;
+
+  // BACKFILL: any earlier slide that has a chat but hasn't been played
+  // gets its bubbles appended instantly (no animation, no slide reveal —
+  // those slides aren't current, so the editor side doesn't matter).
+  const myIdx=FILES.indexOf(f);
+  for(let i=0;i<myIdx;i++){
+    const earlier=FILES[i];
+    if(chatPlayed.has(earlier.id)) continue;
+    if(!earlier.chat || earlier.chat.empty) continue;
+    chatPlayed.add(earlier.id);
+    appendBubble('user', earlier.chat.user, '', false, earlier.id);
+    appendBubble('claude', replyToHTML(earlier.chat.reply), '', false, earlier.id);
+  }
+
+  // Slides without chat: just reveal editor immediately, do nothing to chat.
+  if(!f.chat || f.chat.empty){
+    revealSlide(f, art);
+    if(f.chat && f.chat.empty){
+      setChatPlaceholder('<em>// before MCP — no tools wired up</em>');
+    }
+    return;
+  }
+
+  const nextIdx=Math.min(FILES.length-1, FILES.indexOf(f)+1);
+  const nextFile=FILES[nextIdx];
+  const nextPrompt=(nextFile && nextFile.chat && !nextFile.chat.empty)
+    ? nextFile.chat.user
+    : '<em>// fin de la presentación</em>';
+
+  // REVISIT — already played. Editor reveals instantly, chat stays as-is.
+  if(chatPlayed.has(f.id)){
+    revealSlide(f, art);
+    setChatPlaceholder(nextPrompt);
+    scrollChat();
+    return;
+  }
+
+  // FIRST VISIT — hide slide, animate chat, then reveal.
+  chatPlayed.add(f.id);
+  chatAnimatingId=f.id;
+  chatBusy=true;
+  hideSlide(art);
+  setChatPlaceholder('<em>// generating...</em>');
+
+  const time=nowHM();
+
+  // 1. user message — typewriter
+  const userMsg=appendBubble('user', '', time, true, f.id);
+  const userBubble=userMsg.querySelector('.cp__bubble');
+  typewriter(userBubble, f.chat.user, ()=>{
+    // 2. brief pause, then claude bubble with dots
+    const t=setTimeout(()=>{
+      const claudeMsg=appendBubble('claude', '', time, true, f.id);
+      const claudeBubble=claudeMsg.querySelector('.cp__bubble');
+      streamReply(claudeBubble, f.chat.reply, ()=>{
+        chatBusy=false;
+        chatAnimatingId=null;
+        setChatPlaceholder(nextPrompt);
+        // Now reveal the slide content
+        revealSlide(f, art);
+      });
+    },340);
+    chatTimers.push(t);
+  });
+}
+
+/* Hide the editor slide while the chat is generating */
+function hideSlide(art){
+  if(!art) return;
+  art.classList.remove('is-revealed');
+  art.classList.add('is-generating');
+}
+
+/* Reveal the editor slide and kick off any editor-level effects */
+function revealSlide(f, art){
+  if(!art) return;
+  art.classList.remove('is-generating');
+  // force a frame so the transition runs from hidden→visible
+  requestAnimationFrame(()=>{
+    art.classList.add('is-revealed');
+  });
+  // trigger editor-level stream (s5/s6/s10/s12) shortly after reveal starts
+  if(art.dataset.stream){
+    const t=setTimeout(()=>{
+      const tgt=art.querySelector('[data-stream-target]');
+      if(tgt) triggerStream(tgt);
+    },180);
+    chatTimers.push(t);
+  }
+  // closing terminal (s16)
+  if(f.id==='s16' && !closingPlayed){
+    const t=setTimeout(()=>playClosingTerminal(),180);
+    chatTimers.push(t);
+  }
+}
+
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  const k=e.key.toLowerCase();
+  if(['arrowright','arrowdown',' ','pagedown'].includes(e.key.toLowerCase())||e.key===' '){
+    e.preventDefault(); goTo(idx+1);
+  } else if(['arrowleft','arrowup','pageup'].includes(e.key.toLowerCase())){
+    e.preventDefault(); goTo(idx-1);
+  } else if(e.key==='Home'){e.preventDefault();goTo(0);}
+  else if(e.key==='End'){e.preventDefault();goTo(FILES.length-1);}
+  else if(/^[0-9]$/.test(e.key)){
+    e.preventDefault();
+    const t=e.key==='0'?9:(parseInt(e.key,10)-1);
+    if(t<FILES.length)goTo(t);
+  }
+  else if(k==='n'){e.preventDefault();togglePanel();}
+  else if(k==='s'&&!e.ctrlKey&&!e.metaKey){e.preventDefault();toggleSource();}
+  else if(k==='r'&&e.shiftKey){e.preventDefault();
+    if(FILES[idx].id==='s16')replayClosing();else replayStream();
+  }
+  else if(k==='c'&&e.shiftKey){e.preventDefault();copyLink();}
+  else if(k==='c'){e.preventDefault();toggleChat();}
 });
-document.querySelector(".main").addEventListener("click", () => siguiente());
 
-// Dentro del iframe de la página de la charla, el enlace "Volver" sobra
-if (window.self !== window.top) $("backLink").hidden = true;
+/* ─────────────────── PANEL ─────────────────── */
+function togglePanel(){
+  panelOn=!panelOn;
+  document.getElementById('panel').classList.toggle('is-on',panelOn);
+  document.getElementById('presHud').classList.toggle('is-on',panelOn);
+  if(panelOn && currentPanelTab==='notes'){
+    switchPanelTab('notes');
+  }
+}
 
-irA(Math.max(0, Math.min(SCENES.length - 1, (parseInt(location.hash.slice(1), 10) || 1) - 1)));
+/* ─────────────────── COPY LINK ─────────────────── */
+function copyLink(){
+  const url=location.origin+location.pathname+'#'+FILES[idx].id;
+  if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>showToast('✓ Link copiado'));
+  else showToast(url);
+}
+
+/* ─────────────────── TOAST ─────────────────── */
+const toastEl=document.getElementById('toast');
+let toastT=null;
+function showToast(txt){
+  toastEl.textContent=txt;toastEl.classList.add('is-on');
+  clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('is-on'),1800);
+}
+
+/* ─────────────────── ROTOR ─────────────────── */
+const rotor=document.getElementById('rotor');
+if(rotor){
+  const words=rotor.querySelectorAll('span');
+  let r=0;
+  setInterval(()=>{words[r].classList.remove('is-on');r=(r+1)%words.length;words[r].classList.add('is-on');},2200);
+}
+
+/* ─────────────────── QR placeholder ─────────────────── */
+function makeQR(seed){
+  const S=25,cells=[];
+  let s=0;for(let i=0;i<seed.length;i++)s=(s*31+seed.charCodeAt(i))>>>0;
+  function rng(){s=(s*1103515245+12345)>>>0;return s/4294967296;}
+  for(let y=0;y<S;y++){cells[y]=[];for(let x=0;x<S;x++){cells[y][x]=rng()>.52?1:0;}}
+  function finder(ox,oy){
+    for(let y=0;y<7;y++)for(let x=0;x<7;x++){
+      const v=(x===0||x===6||y===0||y===6)?1:(x>=2&&x<=4&&y>=2&&y<=4)?1:0;
+      cells[oy+y][ox+x]=v;
+    }
+    for(let y=-1;y<=7;y++)for(let x=-1;x<=7;x++){
+      if(x===-1||x===7||y===-1||y===7){const ny=oy+y,nx=ox+x;if(ny>=0&&ny<S&&nx>=0&&nx<S)cells[ny][nx]=0;}
+    }
+  }
+  finder(0,0);finder(S-7,0);finder(0,S-7);
+  for(let y=0;y<5;y++)for(let x=0;x<5;x++){
+    const v=(x===0||x===4||y===0||y===4)?1:(x===2&&y===2)?1:0;
+    cells[S-6+y][S-6+x]=v;
+  }
+  let path='';const cell=100/S;
+  for(let y=0;y<S;y++)for(let x=0;x<S;x++){
+    if(cells[y][x])path+=`M${(x*cell).toFixed(2)} ${(y*cell).toFixed(2)}h${cell.toFixed(2)}v${cell.toFixed(2)}h-${cell.toFixed(2)}z`;
+  }
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><path d="${path}" fill="#0e0e0f"/></svg>`;
+}
+const _qrEl=document.getElementById('qrEl');
+if(_qrEl) _qrEl.innerHTML=makeQR('mcp-en-qa');
+
+/* Dentro del iframe de la página de la charla ya estás en la charla:
+   el enlace "Volver" sobra. */
+if (window.self !== window.top) document.getElementById('backLink').hidden = true;
+
+/* ─────────────────── INIT ─────────────────── */
+window.addEventListener('load',()=>{
+  let start=0;
+  if(location.hash){const i=FILES.findIndex(f=>'#'+f.id===location.hash);if(i>=0)start=i;}
+  goTo(start);
+});
 </script>
 </body>
 </html>
