@@ -16,6 +16,11 @@ resources:
 draft: false
 ---
 
+<figure>
+  <img src="/images/mcp-en-qa.jpg" alt="Joan de pie tras un atril con un portátil, durante la charla sobre MCP" width="900" height="1200" loading="lazy">
+  <figcaption>El día de la charla.</figcaption>
+</figure>
+
 ## El problema: una IA sin contexto
 
 Un asistente de IA genérico no sabe nada de tu proyecto. Si le preguntas
