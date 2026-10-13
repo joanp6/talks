@@ -94,6 +94,24 @@ img {
   height: auto;
 }
 
+/* Fotos dentro del contenido de una charla */
+figure {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+figure img {
+  max-height: 70vh;
+  width: auto;
+  border-radius: var(--radius);
+}
+
+figcaption {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
 .container {
   max-width: var(--width);
   margin: 0 auto;
