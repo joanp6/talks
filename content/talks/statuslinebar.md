@@ -19,6 +19,11 @@ resources:
 draft: false
 ---
 
+<figure>
+  <img src="/images/statuslinebar.jpg" alt="Joan presentando la charla ante el público, con la presentación proyectada en la pared" width="1200" height="900" loading="lazy">
+  <figcaption>El día de la charla, en el Quantiqus Meetup.</figcaption>
+</figure>
+
 ## De qué va
 
 Claude Code tiene una barra en la parte inferior de la terminal que puedes
